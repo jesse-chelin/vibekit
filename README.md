@@ -221,7 +221,7 @@ If you see errors, copy the error message and paste it into Claude Code — it'l
 
 **I want to start over**
 ```bash
-rm -rf node_modules .next prisma/dev.db .env.local .vibekit/intent.json
+rm -rf node_modules .next prisma/dev.db .env .env.local .vibekit/intent.json
 ./setup.sh
 ```
 

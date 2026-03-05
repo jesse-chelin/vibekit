@@ -19,6 +19,7 @@ NC='\033[0m'
 spinner() {
   local pid=$1
   local msg=$2
+  local logfile=$3
   local frames=('⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏')
   local i=0
   tput civis 2>/dev/null || true
@@ -34,7 +35,14 @@ spinner() {
     printf "\r  ${GREEN}✓${NC} ${msg}                    \n"
   else
     printf "\r  ${RED}✗${NC} ${msg}                    \n"
-    return $exit_code
+    echo ""
+    if [ -n "$logfile" ] && [ -f "$logfile" ]; then
+      echo -e "  ${RED}Something went wrong. Here's what happened:${NC}"
+      echo -e "  ${DIM}$(cat "$logfile" | tail -10)${NC}"
+      echo ""
+    fi
+    echo -e "  ${DIM}Try running the failed step manually to see the full error.${NC}"
+    exit 1
   fi
 }
 
@@ -266,26 +274,29 @@ echo -e "  ${DIM}This takes about 30 seconds.${NC}"
 echo ""
 
 # Dependencies
-pnpm install --silent > /dev/null 2>&1 &
-spinner $! "Installing dependencies"
+LOGFILE=$(mktemp)
+pnpm install --silent > "$LOGFILE" 2>&1 &
+spinner $! "Installing dependencies" "$LOGFILE"
 
-# Environment
-if [ ! -f .env.local ]; then
+# Environment — write to .env (Prisma reads this) and .env.local (Next.js reads this)
+if [ ! -f .env ]; then
   AUTH_SECRET=$(openssl rand -base64 32 2>/dev/null || head -c 32 /dev/urandom | base64)
-  cat > .env.local << EOF
+  cat > .env << EOF
 DATABASE_URL="file:./dev.db"
 AUTH_SECRET="${AUTH_SECRET}"
 AUTH_URL="http://localhost:3000"
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
 EOF
+  cp .env .env.local
   echo -e "  ${GREEN}✓${NC} Environment configured"
 else
   echo -e "  ${GREEN}✓${NC} Environment already configured"
 fi
 
 # Database
-(pnpm db:generate > /dev/null 2>&1 && pnpm db:push > /dev/null 2>&1 && pnpm db:seed > /dev/null 2>&1) &
-spinner $! "Setting up database"
+LOGFILE=$(mktemp)
+(pnpm db:generate 2>&1 && pnpm db:push 2>&1 && pnpm db:seed 2>&1) > "$LOGFILE" 2>&1 &
+spinner $! "Setting up database" "$LOGFILE"
 
 echo ""
 sleep 0.3
