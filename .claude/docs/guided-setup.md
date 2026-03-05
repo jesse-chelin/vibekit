@@ -276,11 +276,18 @@ FOR EACH PAGE (whether built in parallel or sequentially), create ALL of these:
 
 FOR EACH PAGE, create ALL of these before moving to the next page:
 
-1. `page.tsx` — Using PageHeader + consistent `p-4 md:p-6` padding + `space-y-6` sections
+1. `page.tsx` — Using PageHeader + `space-y-6` sections (layout provides `p-4 md:p-6` padding)
 2. `loading.tsx` — Skeleton matching the exact layout (same grid, same card sizes)
 3. **Empty state** — EmptyState component with icon, title, description, and action button
 4. **Error handling** — Every data-fetching component handles errors with retry
 5. **Mobile layout** — Verified at 375px width, no overflow
+6. **Real data** — Pages MUST fetch from tRPC, not hardcode demo data. Use the template pages as reference:
+   - Dashboard pattern: `caller` from `@/trpc/server` for direct server fetch
+   - List pages: `trpc.prefetch()` + `HydrateClient` wrapper + client component with `trpc.entity.list.useQuery({})`
+   - Detail pages: `caller.entity.byId()` with `notFound()` error handling
+   - Forms: `react-hook-form` + `zodResolver` + `trpc.entity.create.useMutation()` + toast + query invalidation
+   - Pages using server tRPC calls need `export const dynamic = "force-dynamic"`
+   See `.claude/docs/adding-a-page.md` for complete code patterns.
 
 **Verify each page**: Before starting the next page, mentally walk through:
 - What does a first-time user see? (empty state)

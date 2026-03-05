@@ -62,7 +62,8 @@ import { Briefcase } from "lucide-react";
   icon={Briefcase}
   title="No projects yet"
   description="Create your first project to get started."
-  action={{ label: "New Project", onClick: handleCreate }}
+  action={{ label: "New Project", href: "/projects/new" }}
+  // Or use onClick for client components: action={{ label: "New Project", onClick: handleCreate }}
 />
 ```
 **When:** EVERY list, table, or grid when data is empty. NEVER show a blank area.

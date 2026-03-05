@@ -231,43 +231,93 @@ Every page MUST have ALL of these before it's considered done. Never ship a page
 
 ### Page Content Template (Use This Structure)
 
+The `(app)` layout provides `p-4 md:p-6` padding. Pages just need `space-y-6` for sections.
+
 ```tsx
-// Server component page
+// Server component page with tRPC data (dashboard, detail pages)
+import { caller } from "@/trpc/server";
+
+export const dynamic = "force-dynamic";
+
 export default async function MyPage() {
+  const data = await caller.entity.list({});
+
   return (
-    <div className="flex-1 space-y-6 p-4 md:p-6">
-      <PageHeader
-        title="Page Title"
-        description="What this page shows."
-        actions={<Button>Primary Action</Button>}
-      />
+    <div className="space-y-6">
+      <PageHeader title="Page Title" description="What this page shows." />
       {/* Content with consistent spacing */}
-      <div className="space-y-6">
-        {/* Sections here */}
-      </div>
     </div>
   );
 }
 ```
 
 ```tsx
-// Client component with data fetching
-"use client";
-export function DataList() {
-  const { data, isLoading, error } = useQuery(trpc.entity.list.queryOptions());
+// Server component page with hydration (list pages with client interactivity)
+import { trpc, HydrateClient } from "@/trpc/server";
+import { EntityList } from "./_components/entity-list";
 
-  if (error) return <ErrorState message={error.message} onRetry={() => refetch()} />;
-  if (isLoading) return <ListSkeleton />;
-  if (!data?.length) return (
+export const dynamic = "force-dynamic";
+
+export default async function MyPage() {
+  void trpc.entity.list.prefetch({});
+  return (
+    <HydrateClient>
+      <EntityList />
+    </HydrateClient>
+  );
+}
+```
+
+```tsx
+// Client component with tRPC query
+"use client";
+import { trpc } from "@/trpc/client";
+
+export function EntityList() {
+  const { data, isLoading } = trpc.entity.list.useQuery({});
+
+  if (isLoading) return null; // loading.tsx handles this
+  if (!data?.items.length) return (
     <EmptyState
       icon={Package}
       title="No items yet"
       description="Create your first item to get started."
-      action={{ label: "Create Item", onClick: handleCreate }}
+      action={{ label: "Create Item", href: "/items/new" }}
     />
   );
 
-  return <div className="space-y-4">{/* render data */}</div>;
+  return <DataTable columns={columns} data={data.items} />;
+}
+```
+
+```tsx
+// Client component with form mutation
+"use client";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { trpc } from "@/trpc/client";
+
+export default function CreateEntityPage() {
+  const utils = trpc.useUtils();
+  const form = useForm({ resolver: zodResolver(schema), defaultValues: {...} });
+  const create = trpc.entity.create.useMutation({
+    onSuccess: () => {
+      void utils.entity.list.invalidate();
+      toast.success("Created!");
+      router.push("/items");
+    },
+    onError: (error) => toast.error(error.message),
+  });
+
+  return (
+    <form onSubmit={form.handleSubmit((data) => create.mutate(data))}>
+      {/* fields with form.register() + error display */}
+      <Button disabled={create.isPending}>
+        {create.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+        {create.isPending ? "Creating..." : "Create"}
+      </Button>
+    </form>
+  );
 }
 ```
 
