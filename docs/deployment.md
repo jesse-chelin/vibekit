@@ -2,9 +2,8 @@
 
 ## Development (Default)
 
-Zero infrastructure needed:
+Zero infrastructure needed. Open Claude Code and run `/setup`, then:
 ```bash
-./setup.sh
 pnpm dev
 ```
 Uses SQLite, runs on localhost:3000.

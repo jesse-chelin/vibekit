@@ -5,19 +5,11 @@ Speak in plain language. No jargon. Translate human intent into technical decisi
 
 ---
 
-## Step 0: Read the User's Intent
+## Step 0: Context Check
 
-First, check if `.vibekit/intent.json` exists. If it does, the user already ran `./setup.sh` and told us:
-- **appName**: What they're calling their app
-- **category**: What kind of app (saas, dashboard, ai, ecommerce, social, internal, custom)
+Check if `.vibekit/intent.json` exists with `"interviewComplete": true`. If it does, a previous `/setup` run completed the interview but may not have finished the build. Read the file and use its contents (appName, category, skills, description) to skip the interview and jump directly to Step 7: Build.
 
-Use this to skip Step 1 and fast-track the interview. Greet them by name:
-
-```
-Hi! I see you're building [appName] — a [category description]. Let me help you set it up.
-```
-
-If `intent.json` doesn't exist, ask them directly (Step 1 below).
+If `intent.json` doesn't exist or `interviewComplete` is missing/false, proceed to Step 0b to start the interview.
 
 ---
 
@@ -41,7 +33,7 @@ If the user just says something like "build me a recipe app" without choosing, t
 
 ### 1. Detect category and auto-configure
 
-From their one-sentence description, identify the category and auto-select:
+From the user's description, identify the category and auto-select:
 
 | Category | Auto-Skills | Auto-Models | Auto-Pages |
 |----------|-------------|-------------|------------|
@@ -224,8 +216,7 @@ Always explain: "I'd recommend [X] because [reason]. It costs about [Y]/month."
 
 ### Step 6: "Let's pick a look"
 
-Ask:
-- "What's your app called?"
+Confirm the app name if not already established during the conversation, then ask:
 - "Pick a main color" (offer: blue, green, purple, orange, red, teal)
 
 Apply branding to constants and CSS variables.

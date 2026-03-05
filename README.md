@@ -2,15 +2,15 @@
 
 Describe the app you want. Get a real, production-quality web app — not a demo, not a toy.
 
-Vibekit is a starter kit for [Claude Code](https://docs.anthropic.com/en/docs/claude-code). You clone it, run the setup, open Claude Code, and describe what you want to build in plain English. Claude builds it for you with proper design, error handling, loading states, mobile layouts, and real infrastructure (database, auth, API) — all baked in from the start.
+Vibekit is a starter kit for [Claude Code](https://docs.anthropic.com/en/docs/claude-code). You clone it, open Claude Code, and describe what you want to build in plain English. Claude handles everything — dependencies, database, the interview about your app, building it, and documentation. You get proper design, error handling, loading states, mobile layouts, and real infrastructure (database, auth, API) — all baked in from the start.
 
 ---
 
 ## 🎬 See It In Action
 
 <!-- TODO: Add GIFs/screenshots showing:
-  1. Running setup.sh (template picker, prerequisite checks)
-  2. Claude Code guided interview ("What are you building?")
+  1. Opening Claude Code and running /setup
+  2. The guided interview ("What are you building?")
   3. The generated app running (dashboard, list view, detail page)
   4. Adding a feature with /add-feature
   5. Mobile view of a generated app
@@ -50,7 +50,7 @@ Vibekit is a starter kit for [Claude Code](https://docs.anthropic.com/en/docs/cl
 
 ## 📋 Before You Start
 
-You need three things installed on your computer. If you don't have them, follow the links below.
+You need three things installed on your computer. If you don't have them, follow the links below. (Claude will also check these when you run `/setup` and tell you what's missing.)
 
 ### 1. Node.js (version 18 or newer)
 
@@ -90,59 +90,29 @@ cd my-app
 
 Replace `my-app` with whatever you want your project folder to be called.
 
-### Step 2: Run the setup
-
-```bash
-chmod +x setup.sh
-./setup.sh
-```
-
-The setup will:
-- ✅ Check that Node.js, pnpm, and git are installed (and tell you if something's missing)
-- 🎯 Ask you **what kind of app** you're building (SaaS, dashboard, AI app, etc.)
-- ✏️ Ask you for an **app name**
-- 📦 Install all dependencies
-- 🗄️ Set up a local database with demo data
-
-This takes about 30 seconds.
-
-### Step 3: Check that it works
-
-```bash
-pnpm dev
-```
-
-Open **http://localhost:3000** in your browser. You should see a working app with a landing page, login screen, and dashboard. This is the starter — Claude will replace it with your app in the next step.
-
-You can log in with **demo@vibekit.dev** and any password to look around.
-
-Press `Ctrl+C` in your terminal to stop the server when you're done looking.
-
-### Step 4: Build your app
-
-This is where the magic happens. Open Claude Code in the same project folder:
+### Step 2: Open Claude Code
 
 ```bash
 claude
 ```
 
-Type `/start` to kick off the guided setup:
+### Step 3: Run setup
 
 ```
-/start
+/setup
 ```
 
-Claude will see your project, read the app name and category you chose during setup, and walk you through building your app — what it does, what data it tracks, what screens it needs. Just talk to it like a person.
+That's it. Claude will:
+- Check your prerequisites (Node.js, pnpm, git)
+- Install dependencies and set up the database
+- Ask you what you want to build — just describe it in plain English
+- Figure out the best foundation for your app
+- Build your pages, database, and API
+- Set up documentation so future sessions always know the current state
 
-Based on what you tell it, Claude will:
-- Create your database models
-- Build your pages (with loading states, empty states, error handling, and mobile layouts — automatically)
-- Install any extra features you need (payments, AI, charts, file uploads, etc.)
-- Set up documentation so future sessions always know the current state of your app
+When it's done, run `pnpm dev` to see your app at **http://localhost:3000**.
 
-When it's done, run `pnpm dev` again to see your app.
-
-### Step 5: Keep building
+### Step 4: Keep building
 
 Your app isn't a one-shot thing. Come back any time and open Claude Code to add more features:
 
@@ -199,12 +169,6 @@ Need a specific feature? Skills are pre-built packages Claude can install in sec
 
 ## 🛠️ Troubleshooting
 
-**`setup.sh: Permission denied`**
-```bash
-chmod +x setup.sh
-./setup.sh
-```
-
 **`node: command not found`**
 Install Node.js from [nodejs.org](https://nodejs.org) (LTS version), then restart your terminal.
 
@@ -227,9 +191,9 @@ If you see errors, copy the error message and paste it into Claude Code — it'l
 
 **I want to start over**
 ```bash
-rm -rf node_modules .next prisma/dev.db .env .env.local .vibekit/intent.json
-./setup.sh
+rm -rf node_modules .next prisma/dev.db .env .env.local .vibekit APP.md ROADMAP.md CHANGELOG.md
 ```
+Then open Claude Code and run `/setup` again.
 
 ---
 

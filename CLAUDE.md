@@ -25,14 +25,8 @@ Every time you open this project, do this first:
 ## First Run
 
 If this is a fresh clone with no `APP.md`:
-1. **Check `.vibekit/intent.json`** — if it exists, the user already ran `./setup.sh` and chose an app name and category. Use this to fast-track the interview.
-2. Read `.claude/docs/guided-setup.md` and follow the guided setup flow
-3. Install required skills via the skills engine
-4. Generate the app following all conventions in this file
-5. **Verify every generated page** against the Page Completeness Checklist below
-6. **Generate `APP.md`** — see "Living Documentation" section
-7. **Generate `ROADMAP.md`** — see "Roadmap" section
-8. **Initialize git** and make the first commit
+1. Tell the user to run `/setup` — it handles everything (prerequisites, dependencies, environment, database, guided interview, build, docs, and first commit).
+2. If the user asks questions without running `/setup` first, answer them, but suggest running `/setup` when they're ready to build.
 
 ## Commands
 
@@ -358,7 +352,7 @@ See `.claude/docs/` for detailed guides:
 ## Slash Commands
 
 Available via `/command-name`:
-- `/start` — Kick off the guided setup to build your app (run this first!)
+- `/setup` — Set up your project and build your app (run this first!)
 - `/review-page [path]` — Comprehensive page review (spacing, states, responsiveness, data flow)
 - `/quality-gate` — Pre-ship audit: build, states, data flow, security, docs (run before deploying)
 - `/native-feel [path]` — Audit for Linear/Vercel-quality polish
