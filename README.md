@@ -6,7 +6,49 @@ Vibekit is a starter kit for [Claude Code](https://docs.anthropic.com/en/docs/cl
 
 ---
 
-## Before You Start
+## 🎬 See It In Action
+
+<!-- TODO: Add GIFs/screenshots showing:
+  1. Running setup.sh (template picker, prerequisite checks)
+  2. Claude Code guided interview ("What are you building?")
+  3. The generated app running (dashboard, list view, detail page)
+  4. Adding a feature with /add-feature
+  5. Mobile view of a generated app
+-->
+
+*Coming soon — GIFs of the full flow from clone to running app.*
+
+---
+
+## 🏗️ Built With Vibekit
+
+<!-- TODO: Add example apps with screenshots and descriptions. Format:
+
+### FitTracker
+> Workout logging app with progress charts and AI coaching
+
+![FitTracker screenshot](docs/examples/fittracker.png)
+
+**Skills used:** `charts`, `ollama`
+**Built in:** ~20 minutes
+
+---
+
+### TeamBoard
+> Project management tool with kanban boards and real-time updates
+
+![TeamBoard screenshot](docs/examples/teamboard.png)
+
+**Skills used:** `realtime-chat`, `file-uploads`
+**Built in:** ~30 minutes
+
+-->
+
+*Example apps coming soon. If you build something with Vibekit, we'd love to feature it here.*
+
+---
+
+## 📋 Before You Start
 
 You need three things installed on your computer. If you don't have them, follow the links below.
 
@@ -35,7 +77,7 @@ You'll need a [Claude Pro, Max, or API subscription](https://claude.ai/). Claude
 
 ---
 
-## Getting Started
+## 🚀 Getting Started
 
 ### Step 1: Clone the project
 
@@ -56,11 +98,11 @@ chmod +x setup.sh
 ```
 
 The setup will:
-- Check that Node.js, pnpm, and git are installed (and tell you if something's missing)
-- Ask you **what kind of app** you're building (SaaS, dashboard, AI app, etc.)
-- Ask you for an **app name**
-- Install all dependencies
-- Set up a local database with demo data
+- ✅ Check that Node.js, pnpm, and git are installed (and tell you if something's missing)
+- 🎯 Ask you **what kind of app** you're building (SaaS, dashboard, AI app, etc.)
+- ✏️ Ask you for an **app name**
+- 📦 Install all dependencies
+- 🗄️ Set up a local database with demo data
 
 This takes about 30 seconds.
 
@@ -102,16 +144,16 @@ Your app isn't a one-shot thing. Come back any time and open Claude Code to add 
 claude
 ```
 
-Claude reads your project documentation (APP.md, ROADMAP.md, CHANGELOG.md) at the start of every session, so it always knows what your app is and what's been built. You can say things like:
+Claude reads your project docs at the start of every session, so it always knows what your app is and what's been built. You can say things like:
 
-- "Add a notifications page"
-- "Let users upload profile photos"
-- "Add Stripe payments"
-- "What's next on the roadmap?"
+- *"Add a notifications page"*
+- *"Let users upload profile photos"*
+- *"Add Stripe payments"*
+- *"What's next on the roadmap?"*
 
 ---
 
-## What's Included
+## 📦 What's Included
 
 | What | Why It Matters |
 |------|---------------|
@@ -123,7 +165,7 @@ Claude reads your project documentation (APP.md, ROADMAP.md, CHANGELOG.md) at th
 | **21 installable skills** | Payments, AI, charts, email, maps, chat, and more |
 | **6 deployment options** | Docker, Vercel, Cloudflare, Tailscale, VPS, Coolify |
 
-## Available Skills
+## 🧩 Skills
 
 Need a specific feature? Skills are pre-built packages Claude can install in seconds:
 
@@ -145,11 +187,11 @@ Need a specific feature? Skills are pre-built packages Claude can install in sec
 | `background-jobs` | Scheduled tasks |
 | `notifications-push` | Browser push notifications |
 
-Deployment: `deploy-docker`, `deploy-vercel`, `deploy-cloudflare`, `deploy-tailscale`, `deploy-vps`, `deploy-coolify`
+**Deployment:** `deploy-docker` · `deploy-vercel` · `deploy-cloudflare` · `deploy-tailscale` · `deploy-vps` · `deploy-coolify`
 
 ---
 
-## Troubleshooting
+## 🛠️ Troubleshooting
 
 **`setup.sh: Permission denied`**
 ```bash
@@ -185,7 +227,7 @@ rm -rf node_modules .next prisma/dev.db .env.local .vibekit/intent.json
 
 ---
 
-## How It Works (for the curious)
+## 🤔 How It Works
 
 Vibekit isn't an AI wrapper or a no-code platform. It's a carefully constrained starter kit that makes Claude Code produce consistently high-quality output by:
 
@@ -196,7 +238,7 @@ Vibekit isn't an AI wrapper or a no-code platform. It's a carefully constrained 
 
 ### Tech Stack
 
-Next.js 15, TypeScript, Tailwind CSS v4, shadcn/ui, Prisma (SQLite dev / PostgreSQL prod), tRPC, Auth.js, TanStack Query, Geist fonts.
+Next.js 15 · TypeScript · Tailwind CSS v4 · shadcn/ui · Prisma · tRPC · Auth.js · TanStack Query · Geist fonts
 
 ## License
 
