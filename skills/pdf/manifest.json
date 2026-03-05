@@ -1,0 +1,20 @@
+{
+  "name": "pdf",
+  "version": "1.0.0",
+  "description": "PDF generation with React PDF and invoice template",
+  "category": "feature",
+  "adds": [
+    "src/lib/pdf.ts",
+    "src/components/patterns/pdf-viewer.tsx"
+  ],
+  "modifies": [],
+  "dependencies": {
+    "npm": {
+      "@react-pdf/renderer": "^4.3.0"
+    },
+    "env": [],
+    "skills": []
+  },
+  "conflicts": [],
+  "postInstall": []
+}

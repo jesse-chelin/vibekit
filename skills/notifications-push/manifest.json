@@ -1,0 +1,20 @@
+{
+  "name": "notifications-push",
+  "version": "1.0.0",
+  "description": "Web push notifications with service worker",
+  "category": "feature",
+  "adds": [
+    "src/lib/push.ts",
+    "public/sw.js"
+  ],
+  "modifies": [],
+  "dependencies": {
+    "npm": {
+      "web-push": "^3.6.0"
+    },
+    "env": ["VAPID_PUBLIC_KEY", "VAPID_PRIVATE_KEY", "VAPID_SUBJECT"],
+    "skills": []
+  },
+  "conflicts": [],
+  "postInstall": []
+}

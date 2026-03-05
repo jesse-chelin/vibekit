@@ -1,0 +1,21 @@
+{
+  "name": "email",
+  "version": "1.0.0",
+  "description": "Transactional email via Resend with React Email templates",
+  "category": "integration",
+  "adds": [
+    "src/lib/email.ts",
+    "src/emails/welcome.tsx"
+  ],
+  "modifies": [],
+  "dependencies": {
+    "npm": {
+      "resend": "^4.0.0",
+      "@react-email/components": "^0.0.30"
+    },
+    "env": ["RESEND_API_KEY", "EMAIL_FROM"],
+    "skills": []
+  },
+  "conflicts": [],
+  "postInstall": []
+}

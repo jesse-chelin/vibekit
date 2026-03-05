@@ -1,0 +1,19 @@
+{
+  "name": "deploy-cloudflare",
+  "version": "1.0.0",
+  "description": "Cloudflare Tunnel deployment with automated setup, docker-compose integration, and DNS configuration for instant public HTTPS",
+  "category": "deploy",
+  "adds": [
+    "cloudflared/config.yml",
+    "docker-compose.cloudflare.yml",
+    "scripts/setup-cloudflare.sh"
+  ],
+  "modifies": [],
+  "dependencies": {
+    "npm": {},
+    "env": ["CLOUDFLARE_TUNNEL_TOKEN"],
+    "skills": ["deploy-docker"]
+  },
+  "conflicts": [],
+  "postInstall": []
+}

@@ -1,0 +1,44 @@
+# Development-only files
+skills/
+skills-engine/
+.claude/
+docs/
+prisma/dev.db
+prisma/dev.db-journal
+
+# Scripts not needed in deployment
+scripts/
+setup.sh
+
+# Documentation
+*.md
+!README.md
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Test files
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+__tests__/
+
+# Git
+.git/
+.gitignore
+
+# Env files (set in Vercel Dashboard)
+.env
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Vibekit runtime state
+.vibekit/

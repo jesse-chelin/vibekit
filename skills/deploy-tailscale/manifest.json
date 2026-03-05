@@ -1,0 +1,19 @@
+{
+  "name": "deploy-tailscale",
+  "version": "1.0.0",
+  "description": "Tailscale Funnel deployment for secure sharing with automatic HTTPS and optional systemd service management",
+  "category": "deploy",
+  "adds": [
+    "scripts/setup-tailscale.sh",
+    "scripts/tailscale-service.sh",
+    "tailscale/README.md"
+  ],
+  "modifies": [],
+  "dependencies": {
+    "npm": {},
+    "env": [],
+    "skills": []
+  },
+  "conflicts": [],
+  "postInstall": []
+}

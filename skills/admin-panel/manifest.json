@@ -1,0 +1,25 @@
+{
+  "name": "admin-panel",
+  "version": "1.0.0",
+  "description": "Admin panel with dashboard stats and CRUD management for users, projects, and tasks. Role-gated to admin users only.",
+  "category": "feature",
+  "adds": [
+    "src/trpc/routers/admin.ts",
+    "src/app/(app)/admin/layout.tsx",
+    "src/app/(app)/admin/page.tsx",
+    "src/app/(app)/admin/loading.tsx",
+    "src/app/(app)/admin/users/page.tsx",
+    "src/app/(app)/admin/projects/page.tsx",
+    "src/app/(app)/admin/tasks/page.tsx"
+  ],
+  "modifies": [
+    "src/trpc/router.ts"
+  ],
+  "dependencies": {
+    "npm": {},
+    "env": [],
+    "skills": []
+  },
+  "conflicts": [],
+  "postInstall": []
+}

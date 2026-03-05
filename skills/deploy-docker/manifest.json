@@ -1,0 +1,21 @@
+{
+  "name": "deploy-docker",
+  "version": "1.0.0",
+  "description": "Dockerfile, docker-compose, and PostgreSQL for production deployment",
+  "category": "deploy",
+  "adds": [
+    "Dockerfile",
+    "docker-compose.yml",
+    "docker-compose.prod.yml",
+    ".dockerignore",
+    "scripts/docker-entrypoint.sh"
+  ],
+  "modifies": [],
+  "dependencies": {
+    "npm": {},
+    "env": ["DATABASE_URL", "POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_DB"],
+    "skills": []
+  },
+  "conflicts": [],
+  "postInstall": []
+}

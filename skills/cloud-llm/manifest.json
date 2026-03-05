@@ -1,0 +1,21 @@
+{
+  "name": "cloud-llm",
+  "version": "1.0.0",
+  "description": "Cloud LLM integration — OpenAI, Claude, or OpenRouter",
+  "category": "integration",
+  "adds": [
+    "src/lib/cloud-llm.ts",
+    "src/trpc/routers/ai.ts",
+    "src/components/patterns/chat.tsx"
+  ],
+  "modifies": [],
+  "dependencies": {
+    "npm": {
+      "openai": "^4.73.0"
+    },
+    "env": ["LLM_API_KEY", "LLM_PROVIDER", "LLM_MODEL"],
+    "skills": []
+  },
+  "conflicts": ["ollama"],
+  "postInstall": []
+}

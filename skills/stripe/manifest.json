@@ -1,0 +1,33 @@
+{
+  "name": "stripe",
+  "version": "1.0.0",
+  "description": "Stripe payments, subscriptions, and billing portal with webhook handling and subscription tracking",
+  "category": "integration",
+  "adds": [
+    "src/lib/stripe.ts",
+    "src/trpc/routers/billing.ts",
+    "src/app/(app)/settings/billing/page.tsx",
+    "src/app/(app)/settings/billing/loading.tsx",
+    "src/app/api/webhooks/stripe/route.ts"
+  ],
+  "modifies": [
+    "prisma/schema.prisma",
+    "src/trpc/router.ts"
+  ],
+  "dependencies": {
+    "npm": {
+      "stripe": "^17.0.0",
+      "@stripe/stripe-js": "^5.0.0"
+    },
+    "env": [
+      "STRIPE_SECRET_KEY",
+      "STRIPE_PUBLISHABLE_KEY",
+      "STRIPE_WEBHOOK_SECRET",
+      "STRIPE_PRO_PRICE_ID",
+      "STRIPE_BUSINESS_PRICE_ID"
+    ],
+    "skills": []
+  },
+  "conflicts": [],
+  "postInstall": ["pnpm db:push"]
+}

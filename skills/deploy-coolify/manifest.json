@@ -1,0 +1,19 @@
+{
+  "name": "deploy-coolify",
+  "version": "1.0.0",
+  "description": "Coolify self-hosted PaaS deployment with docker-compose configuration, Traefik labels, health checks, and setup automation",
+  "category": "deploy",
+  "adds": [
+    "docker-compose.coolify.yml",
+    "scripts/setup-coolify.sh",
+    "coolify/README.md"
+  ],
+  "modifies": [],
+  "dependencies": {
+    "npm": {},
+    "env": [],
+    "skills": ["deploy-docker"]
+  },
+  "conflicts": [],
+  "postInstall": []
+}

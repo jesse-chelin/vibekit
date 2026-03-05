@@ -1,0 +1,20 @@
+{
+  "name": "charts",
+  "version": "1.0.0",
+  "description": "Recharts dashboard components — line, bar, area, pie, donut, sparkline",
+  "category": "ui",
+  "adds": [
+    "src/components/patterns/chart-card.tsx",
+    "src/components/patterns/charts.tsx"
+  ],
+  "modifies": [],
+  "dependencies": {
+    "npm": {
+      "recharts": "^2.15.0"
+    },
+    "env": [],
+    "skills": []
+  },
+  "conflicts": [],
+  "postInstall": []
+}

@@ -1,0 +1,21 @@
+{
+  "name": "background-jobs",
+  "version": "1.0.0",
+  "description": "Background jobs with BullMQ and Redis",
+  "category": "infra",
+  "adds": [
+    "src/lib/queue.ts",
+    "src/jobs/example.ts"
+  ],
+  "modifies": [],
+  "dependencies": {
+    "npm": {
+      "bullmq": "^5.34.0",
+      "ioredis": "^5.4.0"
+    },
+    "env": ["REDIS_URL"],
+    "skills": []
+  },
+  "conflicts": [],
+  "postInstall": []
+}

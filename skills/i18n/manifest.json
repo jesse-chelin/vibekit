@@ -1,0 +1,28 @@
+{
+  "name": "i18n",
+  "version": "1.0.0",
+  "description": "Internationalization with next-intl: 5 languages (EN/ES/FR/DE/JA), locale switcher, routing helpers, and comprehensive translation coverage",
+  "category": "feature",
+  "adds": [
+    "src/i18n/config.ts",
+    "src/i18n/request.ts",
+    "src/i18n/routing.ts",
+    "src/i18n/navigation.ts",
+    "src/i18n/messages/en.json",
+    "src/i18n/messages/es.json",
+    "src/i18n/messages/fr.json",
+    "src/i18n/messages/de.json",
+    "src/i18n/messages/ja.json",
+    "src/components/patterns/locale-switcher.tsx"
+  ],
+  "modifies": [],
+  "dependencies": {
+    "npm": {
+      "next-intl": "^4.0.0"
+    },
+    "env": [],
+    "skills": []
+  },
+  "conflicts": [],
+  "postInstall": []
+}

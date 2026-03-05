@@ -1,0 +1,21 @@
+{
+  "name": "analytics",
+  "version": "1.0.0",
+  "description": "PostHog analytics with event tracking and feature flags",
+  "category": "feature",
+  "adds": [
+    "src/lib/analytics.ts",
+    "src/components/shared/analytics-provider.tsx"
+  ],
+  "modifies": [],
+  "dependencies": {
+    "npm": {
+      "posthog-js": "^1.200.0",
+      "posthog-node": "^4.0.0"
+    },
+    "env": ["NEXT_PUBLIC_POSTHOG_KEY", "NEXT_PUBLIC_POSTHOG_HOST"],
+    "skills": []
+  },
+  "conflicts": [],
+  "postInstall": []
+}

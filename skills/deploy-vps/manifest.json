@@ -1,0 +1,20 @@
+{
+  "name": "deploy-vps",
+  "version": "1.0.0",
+  "description": "VPS deployment with Caddy reverse proxy, systemd, and auto-SSL",
+  "category": "deploy",
+  "adds": [
+    "deploy/Caddyfile",
+    "deploy/vibekit.service",
+    "deploy/setup-vps.sh",
+    "deploy/deploy.sh"
+  ],
+  "modifies": [],
+  "dependencies": {
+    "npm": {},
+    "env": ["DOMAIN"],
+    "skills": ["deploy-docker"]
+  },
+  "conflicts": [],
+  "postInstall": []
+}

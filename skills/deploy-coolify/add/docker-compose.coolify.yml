@@ -1,0 +1,70 @@
+# Docker Compose for Coolify deployment
+# Build Pack: Docker Compose
+# Point Coolify to this file in your application settings.
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-vibekit}:${POSTGRES_PASSWORD:-vibekit}@db:5432/${POSTGRES_DB:-vibekit}
+      - AUTH_SECRET=${AUTH_SECRET}
+      - AUTH_URL=${AUTH_URL}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    labels:
+      # Traefik routing (Coolify uses Traefik as reverse proxy)
+      - "traefik.enable=true"
+      - "traefik.http.routers.vibekit.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.vibekit.entrypoints=websecure"
+      - "traefik.http.routers.vibekit.tls.certresolver=letsencrypt"
+      - "traefik.http.services.vibekit.loadbalancer.server.port=3000"
+      # Health check for Traefik
+      - "traefik.http.services.vibekit.loadbalancer.healthcheck.path=/api/health"
+      - "traefik.http.services.vibekit.loadbalancer.healthcheck.interval=30s"
+      # Coolify metadata
+      - "coolify.managed=true"
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-vibekit}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-vibekit}
+      - POSTGRES_DB=${POSTGRES_DB:-vibekit}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-vibekit}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+
+volumes:
+  postgres_data:

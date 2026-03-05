@@ -1,0 +1,20 @@
+{
+  "name": "deploy-vercel",
+  "version": "1.0.0",
+  "description": "Vercel deployment with project configuration, database migration helper, environment setup script, and .vercelignore",
+  "category": "deploy",
+  "adds": [
+    "vercel.json",
+    ".vercelignore",
+    "scripts/setup-vercel.sh",
+    "scripts/vercel-db-migrate.sh"
+  ],
+  "modifies": [],
+  "dependencies": {
+    "npm": {},
+    "env": [],
+    "skills": []
+  },
+  "conflicts": [],
+  "postInstall": []
+}

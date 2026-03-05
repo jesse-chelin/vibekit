@@ -1,0 +1,21 @@
+{
+  "name": "ollama",
+  "version": "1.0.0",
+  "description": "Local LLM integration via Ollama with streaming chat",
+  "category": "integration",
+  "adds": [
+    "src/lib/ollama.ts",
+    "src/trpc/routers/ai.ts",
+    "src/components/patterns/chat.tsx"
+  ],
+  "modifies": [],
+  "dependencies": {
+    "npm": {
+      "ollama": "^0.5.0"
+    },
+    "env": ["OLLAMA_BASE_URL"],
+    "skills": []
+  },
+  "conflicts": [],
+  "postInstall": []
+}
