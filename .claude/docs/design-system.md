@@ -13,13 +13,43 @@ All colors use CSS custom properties via Tailwind. NEVER use raw hex, rgb, oklch
 ### Backgrounds
 | Token | Usage |
 |-------|-------|
-| `bg-background` | Page background (darkest) |
-| `bg-card` | Cards, dialogs, popovers |
-| `bg-muted` | Subtle backgrounds, disabled states |
-| `bg-popover` | Dropdowns, tooltips |
+| `bg-background` | Page background (darkest layer) |
+| `bg-card` | Cards, dialogs — elevated surface, visually distinct from background |
+| `bg-muted` | Subtle backgrounds, disabled states — lighter/cooler than secondary |
+| `bg-secondary` | Button backgrounds, subtle interactive surfaces — distinct from muted |
+| `bg-accent` | Hover/interactive highlights — has a subtle blue tint |
+| `bg-popover` | Dropdowns, tooltips — highest elevation layer |
 | `bg-primary` | Primary action buttons |
 | `bg-destructive` | Danger buttons, error backgrounds |
-| `bg-primary/10` | Subtle accent tint (badges, highlights) |
+| `bg-primary/10` | Subtle accent tint (icon containers, badges, highlights) |
+
+### Surface Elevation (Dark Mode)
+
+Dark mode uses layered surfaces with subtle blue tinting for depth. Each level is visually distinct:
+
+| Level | Token | Usage |
+|-------|-------|-------|
+| Base | `bg-background` | Page background — darkest |
+| Sidebar | `bg-sidebar` | Sidebar — slightly darker than base |
+| Surface | `bg-card` | Cards, panels — noticeably lighter than background |
+| Elevated | `bg-popover` | Popovers, dropdowns — lightest |
+| Interactive | `bg-accent` | Hover states, active items — most blue tint |
+
+This creates the layered depth visible in modern dark UIs (Linear, Neon). The increased chroma (blue tint) at higher levels makes surfaces feel alive rather than flat gray.
+
+### Colored Icon Containers
+
+Use distinct colors per category or entity type. Each stat, feature, or entity should have its own color:
+
+| Color | Background | Text | Use For |
+|-------|------------|------|---------|
+| Blue | `bg-blue-500/10` | `text-blue-500` | Primary entities, projects, totals |
+| Emerald | `bg-emerald-500/10` | `text-emerald-500` | Success, completion, done states |
+| Amber | `bg-amber-500/10` | `text-amber-500` | In-progress, pending, time-related |
+| Violet | `bg-violet-500/10` | `text-violet-500` | Analytics, rates, percentages |
+| Rose | `bg-rose-500/10` | `text-rose-500` | Urgent, overdue, alerts |
+
+Use the `iconColor` prop on `StatCard` to set these automatically.
 
 ### Text
 | Token | Usage |
@@ -179,6 +209,21 @@ Only use presets from `@/components/shared/motion.tsx`:
 
 DO NOT create custom animations. DO NOT use `framer-motion` features beyond these presets.
 
+### When to Use Motion
+
+| Page Section | Wrapper | Why |
+|-------------|---------|-----|
+| Landing hero | `FadeIn` | Subtle entrance, doesn't overwhelm |
+| Landing features grid | `StaggerList` + `StaggerItem` | Sequential reveal draws attention |
+| Landing how-it-works | `StaggerList` + `StaggerItem` | Same pattern as features |
+| Landing CTA | `SlideUp` | Draws eye to the call to action |
+| Dashboard stat cards | `StaggerList` + `StaggerItem` | Stats appear one by one |
+| Dashboard activity/content | `SlideUp` | Content slides up after stats |
+| Detail page sections | `FadeIn` | Gentle entrance for content-heavy pages |
+| Modals/dialogs | `ScaleIn` | Standard dialog entrance |
+
+Pages should feel alive on first load, not static. But don't over-animate — one entrance animation per section is enough.
+
 ## Grids
 
 ```
@@ -189,11 +234,25 @@ Features: grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6
 
 ## Shadows & Elevation
 
-Minimal — this is a dark-first, flat design:
-- Cards: border only, no shadow
-- Dialogs: `shadow-lg` (subtle)
+Elevation comes primarily from surface color differences, not shadows. Shadows are subtle and used sparingly:
+
+- Cards at rest: border only, no shadow
+- Cards on hover (interactive): `hover:shadow-sm` via the `hover-lift` CSS class
+- Primary CTA buttons: `shadow-sm` for subtle depth
+- Dialogs: `shadow-lg`
 - Dropdowns: `shadow-md`
 - Do NOT use `shadow-xl` or `shadow-2xl`
+
+### Hover Utilities
+
+Two CSS utility classes for interactive feedback:
+
+| Class | Effect | Use On |
+|-------|--------|--------|
+| `hover-lift` | `translateY(-1px)` + `shadow-sm` on hover | Feature cards, stat cards, interactive list items |
+| `press-down` | `scale(0.98)` on active | Buttons, clickable cards |
+
+These are CSS transitions (not keyframe animations), so they stay within the "no custom animations" constraint.
 
 ## Content Overflow
 

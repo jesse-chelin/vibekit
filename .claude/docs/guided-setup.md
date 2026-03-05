@@ -262,7 +262,17 @@ npx tsx skills-engine/index.ts apply <name>
 
 **Verify**: No TypeScript errors in the router files. Run `npx tsc --noEmit` on the router directory if unsure.
 
-#### 7d. Generate Pages (one at a time, verify each)
+#### 7c-checkpoint. Commit: data models and API
+```bash
+git add -A && git commit -m "feat: add data models and API"
+```
+This creates a save point. If the page generation step fails, you won't lose the schema and router work.
+
+#### 7d. Generate Pages
+
+**Parallel page generation**: Identify pages that don't depend on each other (e.g., a Chores page and a Bills page are independent — they have separate routers and models). Use the Task tool to launch parallel agents for independent pages. Each agent should create `page.tsx` + `loading.tsx` + client component for one page. Pages that share data or components should be built sequentially. This can cut build time by 40-60%.
+
+FOR EACH PAGE (whether built in parallel or sequentially), create ALL of these:
 
 FOR EACH PAGE, create ALL of these before moving to the next page:
 
@@ -285,6 +295,12 @@ CRITICAL: Do NOT skip any of these. The #1 mistake in AI-generated apps is
 shipping pages without empty states, error handling, and loading skeletons.
 These are NOT polish — they are core features. A page without an empty state
 is like a function without error handling. It's incomplete.
+
+#### 7d-checkpoint. Commit: all pages
+```bash
+git add -A && git commit -m "feat: add all pages"
+```
+Another save point before wiring up navigation and data flow.
 
 #### 7e. Navigation and Data Flow
 - Add pages to sidebar navigation
@@ -349,6 +365,25 @@ If the user wants to push to GitHub:
 ```bash
 gh repo create [app-name] --private --source=. --push
 ```
+
+### Programmatic Verification (run before the manual checklist)
+
+After the build passes, run these automated checks:
+
+```
+For every page.tsx under src/app/(app)/:
+  1. Check that a loading.tsx exists in the same directory
+  2. Grep the page or its client components for "EmptyState" — every list page must use it
+  3. Grep for error handling (onError, error boundary, or error state rendering)
+  4. Grep for TODO, FIXME, "goes here", or similar stub markers — any found means the page is not done
+
+For each skill listed in the build plan or .vibekit/intent.json:
+  1. Verify at least one component, route, or page imports or uses the skill
+  2. If a skill was installed but not integrated, either integrate it now or remove it:
+     npx tsx skills-engine/index.ts remove <name>
+```
+
+If any check fails, fix it before continuing. Do not ship stubs or unused skills.
 
 ### Post-Build Verification (MANDATORY)
 

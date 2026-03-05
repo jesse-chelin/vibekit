@@ -67,6 +67,7 @@ import { Briefcase } from "lucide-react";
 ```
 **When:** EVERY list, table, or grid when data is empty. NEVER show a blank area.
 **Required props:** icon, title, description. Action button strongly recommended.
+**Styling:** Uses solid border (not dashed), primary-tinted icon container. Looks clean and intentional, not like a placeholder.
 
 ### StatCard
 ```tsx
@@ -75,11 +76,14 @@ import { StatCard } from "@/components/patterns/stat-card";
 <StatCard
   title="Total Projects"
   value={42}
-  description="+12% from last month"
   icon={Briefcase}
+  iconColor="text-blue-500"
+  trend={{ value: 12, label: "from last month" }}
 />
 ```
 **When:** Dashboard metrics, KPI displays. Use in a grid: `grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4`
+**Props:** `iconColor` accepts a Tailwind text color class (e.g., `text-blue-500`, `text-emerald-500`) — the icon container auto-generates a matching tinted background. Use a different color for each stat to add visual variety.
+**Wrap in motion:** `StaggerList` on the grid + `StaggerItem` on each card for entrance animation.
 
 ### DataTable
 ```tsx

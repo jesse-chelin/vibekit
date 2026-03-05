@@ -2,15 +2,17 @@ import { PageHeader } from "@/components/layout/page-header";
 import { StatCard } from "@/components/patterns/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ActivityFeed } from "@/components/patterns/activity-feed";
+import { StaggerList, StaggerItem, SlideUp } from "@/components/shared/motion";
 import { FolderOpen, CheckCircle2, Clock, TrendingUp } from "lucide-react";
 
 export const metadata = { title: "Dashboard" };
 
+/* Replace: fetch real stats from your tRPC routers */
 const stats = [
-  { title: "Total Projects", value: "5", icon: FolderOpen, trend: { value: 12, label: "from last month" } },
-  { title: "Completed Tasks", value: "7", icon: CheckCircle2, trend: { value: 8, label: "from last week" } },
-  { title: "In Progress", value: "4", icon: Clock, description: "across 3 projects" },
-  { title: "Completion Rate", value: "47%", icon: TrendingUp, trend: { value: 5, label: "improvement" } },
+  { title: "Total Projects", value: "5", icon: FolderOpen, iconColor: "text-blue-500", trend: { value: 12, label: "from last month" } },
+  { title: "Completed Tasks", value: "7", icon: CheckCircle2, iconColor: "text-emerald-500", trend: { value: 8, label: "from last week" } },
+  { title: "In Progress", value: "4", icon: Clock, iconColor: "text-amber-500", description: "across 3 projects" },
+  { title: "Completion Rate", value: "47%", icon: TrendingUp, iconColor: "text-violet-500", trend: { value: 5, label: "improvement" } },
 ];
 
 const recentActivity = [
@@ -24,16 +26,18 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <PageHeader
         title="Dashboard"
-        description="Welcome back! Here's an overview of your projects."
+        description={/* Replace: personalized greeting */ "Welcome back! Here's an overview of your projects."}
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <StaggerList className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
-          <StatCard key={stat.title} {...stat} />
+          <StaggerItem key={stat.title}>
+            <StatCard {...stat} />
+          </StaggerItem>
         ))}
-      </div>
+      </StaggerList>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <SlideUp className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>Recent Activity</CardTitle>
@@ -64,7 +68,7 @@ export default function DashboardPage() {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </SlideUp>
     </div>
   );
 }

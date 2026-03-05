@@ -213,7 +213,7 @@ If the mutation affects counts or stats shown elsewhere (dashboard, sidebar badg
 
 ## Page Completeness Checklist (MANDATORY)
 
-Every page MUST have ALL of these before it's considered done. Never ship a page without them — retrofitting is 3x harder than building them in.
+Every page MUST have ALL of these before it's considered done. Never ship a page without them — retrofitting is 3x harder than building them in. This applies to ALL pages — including settings subpages, onboarding, and any route with a `page.tsx`. Settings pages are pages too.
 
 1. **`loading.tsx`** — Skeleton that matches the page layout exactly (same grid, same card sizes, same spacing)
 2. **Empty state** — When there's no data. Use `EmptyState` component with: icon, title, description, and action button
@@ -300,6 +300,10 @@ Page padding is ALWAYS `p-4 md:p-6`. Every page. No exceptions. This single rule
 8. **Error states**: Every data-fetching component MUST handle errors gracefully with a retry option.
 9. **No content shift**: Use fixed-height containers for dynamic content. Set aspect ratios for images. Truncate text with `truncate` (single line) or `line-clamp-N` (multi-line).
 10. **Consistent density**: Don't mix spacious hero sections with cramped data tables on the same page. Match density throughout.
+11. **Motion on page sections**: Use `FadeIn`, `SlideUp`, `StaggerList`/`StaggerItem` from `@/components/shared/motion.tsx` on page sections and list items. Pages should feel alive, not static. Dashboards wrap stat grids in `StaggerList`, landing pages wrap feature grids in `StaggerList`.
+12. **Hover feedback on cards**: Stat cards, feature cards, and interactive list items should have hover feedback — `hover:border-primary/30` and/or the `hover-lift` CSS class for subtle elevation. Use `transition-all` for smooth state changes.
+13. **Colored icon containers**: Use distinct colors per category or entity: `bg-blue-500/10 text-blue-500`, `bg-emerald-500/10 text-emerald-500`, `bg-amber-500/10 text-amber-500`, `bg-violet-500/10 text-violet-500`. Each entity type or stat category should have its own color, not all `text-muted-foreground`.
+14. **Landing pages must have visual depth**: Hero with gradient treatment (`from-primary/5 via-transparent`), features with `StaggerList` entrance animation and colored per-feature icons, a how-it-works section, and a CTA with background differentiation (`bg-muted/50 border-t`).
 
 ## Hard Constraints (DO NOT)
 
@@ -315,6 +319,7 @@ Page padding is ALWAYS `p-4 md:p-6`. Every page. No exceptions. This single rule
 - DO NOT ship a page without testing at 375px viewport width
 - DO NOT assume mutations only affect the current page — invalidate all stale queries
 - DO NOT let APP.md get out of date — update it with every feature change
+- DO NOT leave TODO, FIXME, or placeholder comments like "logic goes here" in shipped code — either implement the feature or don't create the page
 
 ## Interactive State Guidelines
 
