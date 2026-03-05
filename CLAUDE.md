@@ -358,6 +358,7 @@ See `.claude/docs/` for detailed guides:
 ## Slash Commands
 
 Available via `/command-name`:
+- `/start` — Kick off the guided setup to build your app (run this first!)
 - `/review-page [path]` — Comprehensive page review (spacing, states, responsiveness, data flow)
 - `/quality-gate` — Pre-ship audit: build, states, data flow, security, docs (run before deploying)
 - `/native-feel [path]` — Audit for Linear/Vercel-quality polish

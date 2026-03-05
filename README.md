@@ -126,7 +126,13 @@ This is where the magic happens. Open Claude Code in the same project folder:
 claude
 ```
 
-Claude will see your project, read the app name and category you chose during setup, and start a conversation with you. It'll ask you to describe your app — what it does, what data it tracks, what screens it needs. Just talk to it like a person.
+Type `/start` to kick off the guided setup:
+
+```
+/start
+```
+
+Claude will see your project, read the app name and category you chose during setup, and walk you through building your app — what it does, what data it tracks, what screens it needs. Just talk to it like a person.
 
 Based on what you tell it, Claude will:
 - Create your database models

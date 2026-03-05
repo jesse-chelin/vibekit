@@ -318,13 +318,12 @@ draw_box "  " 46 \
   "    Then open ${CYAN}http://localhost:3000${NC}            " \
   "    ${DIM}Login: demo@vibekit.dev (any password)${NC}    " \
   "                                              " \
-  " ${BOLD}2.${NC} Open Claude Code to build your app:       " \
+  " ${BOLD}2.${NC} Open Claude Code and start building:      " \
   "                                              " \
   "    ${GREEN}claude${NC}                                    " \
   "                                              " \
-  "    ${DIM}Claude knows you're building a${NC}             " \
-  "    ${BOLD}${CATEGORY_LABEL}${NC} ${DIM}called${NC} ${BOLD}${APP_NAME}${NC}${DIM}.${NC}              " \
-  "    ${DIM}Just describe what you want.${NC}               " \
+  "    Then type ${CYAN}/start${NC} to begin.                 " \
+  "    ${DIM}Claude will guide you from there.${NC}          " \
   "                                              "
 
 echo ""
