@@ -190,7 +190,7 @@ When working on a roadmap item:
 1. Prisma models in `prisma/schema.prisma`
 2. tRPC routers in `src/trpc/routers/`
 3. Server components call `caller` from `src/trpc/server.tsx`
-4. Client components use `useTRPC` from `src/trpc/client.tsx`
+4. Client components use `trpc` from `src/trpc/client.tsx`
 
 ### Data Propagation (CRITICAL)
 When a mutation changes server state, ALL affected views must be refreshed. Never assume only the current page uses the data. Pattern:
@@ -303,6 +303,7 @@ export default function CreateEntityPage() {
   const create = trpc.entity.create.useMutation({
     onSuccess: () => {
       void utils.entity.list.invalidate();
+      void utils.user.stats.invalidate(); // dashboard counts
       toast.success("Created!");
       router.push("/items");
     },
@@ -370,6 +371,9 @@ Page padding is ALWAYS `p-4 md:p-6`. Every page. No exceptions. This single rule
 - DO NOT assume mutations only affect the current page — invalidate all stale queries
 - DO NOT let APP.md get out of date — update it with every feature change
 - DO NOT leave TODO, FIXME, or placeholder comments like "logic goes here" in shipped code — either implement the feature or don't create the page
+- DO NOT hardcode data in pages — always fetch from tRPC routers. No fake arrays, no demo data, no placeholder numbers.
+- DO NOT return raw arrays from `list` procedures — always return `{ items, total, page, pageSize, totalPages }`. Page templates access `data.items`.
+- DO NOT omit `export const dynamic = "force-dynamic"` on pages using `caller` or `trpc.prefetch()` — the build will fail because auth context isn't available at static generation time
 
 ## Interactive State Guidelines
 

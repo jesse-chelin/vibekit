@@ -36,14 +36,10 @@ export default async function ProjectsPage() {
 ### Client Component (for interactive data)
 ```tsx
 "use client";
-import { useTRPC } from "@/trpc/client";
-import { useQuery } from "@tanstack/react-query";
+import { trpc } from "@/trpc/client";
 
 export function ProjectList() {
-  const trpc = useTRPC();
-  const { data, isLoading, error, refetch } = useQuery(
-    trpc.project.list.queryOptions()
-  );
+  const { data, isLoading, error, refetch } = trpc.project.list.useQuery({});
   // TanStack Query handles caching, deduplication, stale-while-revalidate
 }
 ```
@@ -60,7 +56,7 @@ export function ProjectList() {
 After every mutation, invalidate ALL queries that could show stale data:
 
 ```tsx
-const utils = useTRPC();
+const utils = trpc.useUtils();
 
 const createProject = useMutation(
   trpc.project.create.mutationOptions({

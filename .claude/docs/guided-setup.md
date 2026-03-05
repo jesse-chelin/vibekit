@@ -257,8 +257,32 @@ npx tsx skills-engine/index.ts apply <name>
 **Verify**: `pnpm db:push` succeeds. If it fails (schema error, SQLite limitation), fix the schema and re-push. Do NOT proceed with a broken schema.
 
 #### 7c. Generate API
-- Create tRPC routers with Zod input validation for each model
-- Wire routers into the root router
+
+For each Prisma model, create a tRPC router with these **5 standard procedures**:
+
+| Procedure | Type | Returns | Purpose |
+|-----------|------|---------|---------|
+| `list` | query | `{ items, total, page, pageSize, totalPages }` | Paginated list with optional search/filters |
+| `byId` | query | Single record | Detail view, throws error if not found |
+| `create` | mutation | Created record | Zod-validated input, scoped to userId |
+| `update` | mutation | Updated record | `{ id, ...optionalFields }` pattern |
+| `delete` | mutation | Deleted record | Scoped to userId (prevents cross-user deletion) |
+
+**Requirements:**
+- All procedures use `protectedProcedure` (not `publicProcedure`)
+- All scope queries to `ctx.session.user.id`
+- `list` MUST return `{ items, total, page, pageSize, totalPages }` — never a raw array. Page templates access `data.items`, and a raw array will crash every list page.
+- Import Zod from `"zod/v4"` (not `"zod"`)
+- See `.claude/docs/adding-an-api-route.md` for the complete router template with worked example
+
+**Register each router** in `src/trpc/router.ts`:
+```typescript
+import { entityRouter } from "@/trpc/routers/entity";
+// Add to appRouter: entity: entityRouter,
+```
+
+**Update dashboard stats** in `src/trpc/routers/user.ts`:
+Add a count for each new entity type to the `stats` procedure. Every dashboard stat card needs a count source from this procedure.
 
 **Verify**: No TypeScript errors in the router files. Run `npx tsc --noEmit` on the router directory if unsure.
 
@@ -272,8 +296,6 @@ This creates a save point. If the page generation step fails, you won't lose the
 
 **Parallel page generation**: Identify pages that don't depend on each other (e.g., a Chores page and a Bills page are independent — they have separate routers and models). Use the Task tool to launch parallel agents for independent pages. Each agent should create `page.tsx` + `loading.tsx` + client component for one page. Pages that share data or components should be built sequentially. This can cut build time by 40-60%.
 
-FOR EACH PAGE (whether built in parallel or sequentially), create ALL of these:
-
 FOR EACH PAGE, create ALL of these before moving to the next page:
 
 1. `page.tsx` — Using PageHeader + `space-y-6` sections (layout provides `p-4 md:p-6` padding)
@@ -281,13 +303,25 @@ FOR EACH PAGE, create ALL of these before moving to the next page:
 3. **Empty state** — EmptyState component with icon, title, description, and action button
 4. **Error handling** — Every data-fetching component handles errors with retry
 5. **Mobile layout** — Verified at 375px width, no overflow
-6. **Real data** — Pages MUST fetch from tRPC, not hardcode demo data. Use the template pages as reference:
-   - Dashboard pattern: `caller` from `@/trpc/server` for direct server fetch
-   - List pages: `trpc.prefetch()` + `HydrateClient` wrapper + client component with `trpc.entity.list.useQuery({})`
-   - Detail pages: `caller.entity.byId()` with `notFound()` error handling
-   - Forms: `react-hook-form` + `zodResolver` + `trpc.entity.create.useMutation()` + toast + query invalidation
-   - Pages using server tRPC calls need `export const dynamic = "force-dynamic"`
-   See `.claude/docs/adding-a-page.md` for complete code patterns.
+6. **Real data** — Pages MUST fetch from tRPC, not hardcode demo data. Use the **Page Type Wiring Guide** below:
+
+   | Page Type | Server `page.tsx` | Client `_components/` | Data Access |
+   |-----------|-------------------|----------------------|-------------|
+   | Dashboard | `caller.user.stats()` + `caller.entity.list({ pageSize: 5 })` | N/A (server component) | Stats object + `recentItems.items` |
+   | List | `void trpc.entity.list.prefetch({})` → `<HydrateClient>` | `entity-list.tsx`: `trpc.entity.list.useQuery({})` | `data?.items.length`, `data.items` |
+   | Detail | `caller.entity.byId({ id })` + try/catch → `notFound()` | Optional: `delete-entity-button.tsx` | Single record directly |
+   | Create | N/A (client `"use client"` page) | `useForm({ resolver: zodResolver(schema), defaultValues })` + `trpc.entity.create.useMutation()` | Form state |
+   | Edit | N/A (client `"use client"` page) | `trpc.entity.byId.useQuery({ id })` + `useForm({ values })` + `trpc.entity.update.useMutation()` | Query → form values |
+
+   **Wiring rules (apply to every page):**
+   - **Schema Sync:** Form Zod schema mirrors the tRPC input schema but WITHOUT `.default()`. Use `defaultValues` on `useForm()` instead.
+   - **Invalidation:** Every create/update/delete mutation must invalidate `entity.list` AND `user.stats` (dashboard counts).
+   - **List Data Contract:** Client components access `data?.items.length` and `data.items` — never `data?.length` or `data` directly. The list procedure returns `{ items, total, page, pageSize, totalPages }`.
+   - **Client Components:** Interactive list components go in `_components/entity-list.tsx` adjacent to `page.tsx`.
+   - **Dynamic Export:** All pages using `caller` or `trpc.prefetch()` require `export const dynamic = "force-dynamic"`.
+   - **Select Fields:** shadcn Select doesn't work with `form.register()` — use `form.watch("field")` + `form.setValue("field", value)`.
+
+   See `.claude/docs/adding-a-page.md` for complete code patterns per page type.
 
 **Verify each page**: Before starting the next page, mentally walk through:
 - What does a first-time user see? (empty state)

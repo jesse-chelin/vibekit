@@ -306,7 +306,7 @@ Track token/time usage during builds:
 | Priority | Item | Impact | Effort |
 |----------|------|--------|--------|
 | **P0** | ~~1.1 Wire template pages to API~~ | ~~Fixes the core credibility gap~~ | ✅ Done (2026-03-06) |
-| **P0** | 1.2 Generate wired pages during build | Every `/setup` produces working apps | Medium |
+| **P0** | ~~1.2 Generate wired pages during build~~ | ~~Every `/setup` produces working apps~~ | ✅ Done (2026-03-06) |
 | **P0** | ~~1.3 Form integration pattern~~ | ~~Forms actually work~~ | ✅ Done (2026-03-06) |
 | **P1** | 2.1 Idea validation phase | Product quality, not just code quality | Medium |
 | **P1** | 2.2 Enhanced intent file | Captures validation context | Small |
@@ -376,6 +376,13 @@ The competition is building faster hammers. Vibekit should be the advisor that m
 - `void utils.entity.list.invalidate()` for data propagation
 - Loading state on submit buttons with Loader2 spinner
 - Select components use `watch()` + `setValue()` instead of `register()`
+
+**1.2 Generate wired pages during build** — Build instructions now produce wired pages for any app:
+- `adding-an-api-route.md`: Complete rewrite with 5-procedure router template (list/byId/create/update/delete), paginated return shape `{ items, total, page, pageSize, totalPages }`, router registration, user.stats update, Recipe worked example
+- `guided-setup.md` Step 7c: Standard procedures table, router registration instruction, dashboard stats requirement
+- `guided-setup.md` Step 7d: Page Type Wiring Guide table (dashboard/list/detail/create/edit), schema sync rule, invalidation rule, list data contract, `_components/` convention
+- `CLAUDE.md`: Fixed `useTRPC` → `trpc`, added `user.stats` invalidation to mutation template, 3 new Hard Constraints (no hardcoded data, no raw arrays, force-dynamic required)
+- `performance-guide.md`: Fixed stale `useTRPC` references
 
 ### 2026-03-06 — Design System Overhaul
 
