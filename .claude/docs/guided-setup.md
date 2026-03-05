@@ -5,9 +5,25 @@ Speak in plain language. No jargon. Translate human intent into technical decisi
 
 ---
 
-## Step 0: Choose Your Path
+## Step 0: Read the User's Intent
 
-Before anything else, ask the user how they'd like to build:
+First, check if `.vibekit/intent.json` exists. If it does, the user already ran `./setup.sh` and told us:
+- **appName**: What they're calling their app
+- **category**: What kind of app (saas, dashboard, ai, ecommerce, social, internal, custom)
+
+Use this to skip Step 1 and fast-track the interview. Greet them by name:
+
+```
+Hi! I see you're building [appName] — a [category description]. Let me help you set it up.
+```
+
+If `intent.json` doesn't exist, ask them directly (Step 1 below).
+
+---
+
+## Step 0b: Choose Your Path
+
+Ask the user how they'd like to build:
 
 **Quick Start**: "Tell me what you're building in one sentence, and I'll set everything up with smart defaults. You can customize later."
 - Infers category, auto-selects skills, uses default pages and models

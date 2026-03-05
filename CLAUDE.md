@@ -25,8 +25,8 @@ Every time you open this project, do this first:
 ## First Run
 
 If this is a fresh clone with no `APP.md`:
-1. Read `.claude/docs/guided-setup.md`
-2. Follow the interview flow to understand what they want to build
+1. **Check `.vibekit/intent.json`** — if it exists, the user already ran `./setup.sh` and chose an app name and category. Use this to fast-track the interview.
+2. Read `.claude/docs/guided-setup.md` and follow the guided setup flow
 3. Install required skills via the skills engine
 4. Generate the app following all conventions in this file
 5. **Verify every generated page** against the Page Completeness Checklist below
