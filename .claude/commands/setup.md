@@ -24,64 +24,31 @@ Check what's already been done so `/setup` is safe to re-run:
    - `.env` exists → skip environment setup
    - `prisma/dev.db` exists → skip database setup
 
-### Step 1: Prerequisites
+### Steps 1–4: Project Setup (do all of this before talking to the user)
 
-Run these checks:
+Run these silently and efficiently. Only talk to the user if something fails.
 
-1. **Node.js**: Run `node -v` — need v18 or newer.
-   If missing or too old: "You need Node.js 18 or newer. Install it from https://nodejs.org (grab the LTS version), then come back and run `/setup` again."
+1. **Prerequisites** — Run `node -v`, `pnpm -v`, `git --version` in a single bash command.
+   - If ANY are missing, list everything needed in one message and **stop**.
+   - If Node.js is below v18, tell them to upgrade and stop.
 
-2. **pnpm**: Run `pnpm -v`
-   If missing: "You need pnpm. Run this in your terminal: `npm install -g pnpm` — then run `/setup` again."
+2. **Dependencies** — If `node_modules/` doesn't exist, run `pnpm install`.
 
-3. **git**: Run `git --version`
-   If missing: "You need git. Install it from https://git-scm.com, then run `/setup` again."
+3. **Environment** — If `.env` doesn't exist:
+   - Run `openssl rand -base64 32` to generate AUTH_SECRET
+   - Write `.env` with DATABASE_URL, AUTH_SECRET, AUTH_URL, NEXT_PUBLIC_APP_URL
+   - Copy `.env` to `.env.local` (Prisma reads `.env`, Next.js reads `.env.local`)
 
-If ANY prerequisite is missing, list everything that's needed in one message and **stop**. Don't proceed with partial prerequisites.
+4. **Database** — If `prisma/dev.db` doesn't exist, run `pnpm db:generate && pnpm db:push && pnpm db:seed`.
 
-If everything's good, confirm briefly: "Prerequisites look good — Node [version], pnpm [version], git [version]."
+Once all 4 steps complete successfully, give the user a single brief status update:
 
-### Step 2: Install Dependencies
+"All set up — Node [version], dependencies installed, database ready.
 
-Run: `pnpm install`
+Now let's figure out what to build. Tell me about the app you want — what does it do, and who is it for? You can be as brief or detailed as you like."
 
-This takes about 30 seconds. Tell the user: "Installing dependencies — this takes about 30 seconds."
-
-If it fails, show the error and suggest: "Try deleting `node_modules` and running `/setup` again."
-
-### Step 3: Environment Setup
-
-If `.env` does NOT exist:
-
-1. Generate a secret: run `openssl rand -base64 32`
-2. Create `.env` with the generated secret:
-   ```
-   DATABASE_URL="file:./dev.db"
-   AUTH_SECRET="[generated value]"
-   AUTH_URL="http://localhost:3000"
-   NEXT_PUBLIC_APP_URL="http://localhost:3000"
-   ```
-3. Copy `.env` to `.env.local` — Prisma reads `.env`, Next.js reads `.env.local`, both need to exist.
-
-Confirm: "Environment configured."
-
-If `.env` already exists, skip and confirm: "Environment already configured."
-
-### Step 4: Database Setup
-
-Run: `pnpm db:generate && pnpm db:push && pnpm db:seed`
-
-If it fails, show the error. Common fix: "Try `rm prisma/dev.db` and run `/setup` again."
-
-Confirm: "Database ready with demo data."
-
-### Step 5: Guided Interview
-
-Tell the user:
-
-"Everything is installed and ready. Now let's figure out what to build.
-
-Tell me about the app you want to build — what does it do, and who is it for? You can be as brief or detailed as you like."
+If any step was already done (e.g. node_modules exists), skip it silently.
+If any step fails, stop immediately, show the error clearly, and suggest a fix.
 
 Now read `.claude/docs/guided-setup.md` and follow the interview flow starting from **Step 0b** (Quick Start vs Custom Build). Key points:
 
@@ -90,11 +57,9 @@ Now read `.claude/docs/guided-setup.md` and follow the interview flow starting f
 - If they give detailed requirements or ask questions, take the Custom Build path — go step by step with checkpoints.
 - At every checkpoint, present a summary and wait for approval before continuing.
 
-### Step 6: Save Intent
+### After the Interview: Save Intent
 
-After the interview is complete and the user has approved the build plan, save the results:
-
-Write `.vibekit/intent.json`:
+After the interview is complete and the user has approved the build plan, save the results to `.vibekit/intent.json`:
 ```json
 {
   "appName": "[name from interview]",
@@ -107,7 +72,7 @@ Write `.vibekit/intent.json`:
 }
 ```
 
-### Step 7: Build
+### Build
 
 Follow `guided-setup.md` Step 7 exactly:
 1. Install skills
@@ -118,11 +83,11 @@ Follow `guided-setup.md` Step 7 exactly:
 6. Apply branding
 7. Seed + `pnpm build` to verify
 
-### Step 8: Documentation
+### Documentation
 
 Generate APP.md, ROADMAP.md, CHANGELOG.md as described in `guided-setup.md` Steps 7i-7k.
 
-### Step 9: Git + Summary
+### Git + Summary
 
 Initialize git and commit:
 ```bash
