@@ -243,99 +243,110 @@ const CHART_COLORS = [
 function MockSidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
   return (
     <div
-      className="flex h-full shrink-0 flex-col overflow-hidden border-r bg-sidebar text-sidebar-foreground transition-[width] duration-200 ease-out"
-      style={{ width: collapsed ? 56 : 256 }}
+      className="shrink-0 overflow-hidden border-r bg-sidebar"
+      style={{ width: collapsed ? 56 : 240 }}
     >
-      {/* Header */}
-      <div className="flex h-14 shrink-0 items-center gap-2 border-b border-sidebar-border px-3">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary">
-          <Zap className="h-4 w-4 text-primary-foreground" />
-        </div>
-        <span className="min-w-0 flex-1 truncate text-lg font-semibold tracking-tight">Vibekit</span>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              onClick={onToggle}
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-sidebar-foreground/50 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
-            >
-              <ChevronsLeft className="h-4 w-4 transition-transform duration-200" style={{ transform: collapsed ? "rotate(180deg)" : "rotate(0deg)" }} />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="right">{collapsed ? "Expand sidebar" : "Collapse sidebar"}</TooltipContent>
-        </Tooltip>
-      </div>
-
-      {/* Navigation */}
-      <nav className="flex-1 space-y-1 overflow-hidden px-3 py-2">
-        <p className="truncate px-2 py-1.5 text-xs font-medium text-sidebar-foreground/50">
-          Navigation
-        </p>
-        {navItems.map((item) => (
-          <Tooltip key={item.label}>
+      <div className="flex h-full w-60 flex-col text-sidebar-foreground">
+        {/* Header */}
+        <div className="flex h-14 shrink-0 items-center gap-2 border-b border-sidebar-border px-4">
+          <Tooltip open={collapsed ? undefined : false}>
             <TooltipTrigger asChild>
               <button
                 type="button"
-                className={`flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors ${
-                  item.active
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                }`}
+                onClick={onToggle}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary"
+                aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
               >
-                <item.icon className="h-4 w-4 shrink-0" />
-                <span className="min-w-0 flex-1 truncate text-left">{item.label}</span>
-                {item.badge && (
-                  <Badge
-                    variant="secondary"
-                    className="h-5 shrink-0 min-w-[20px] justify-center px-1.5 text-[10px]"
-                  >
-                    {item.badge}
-                  </Badge>
-                )}
+                <Zap className="h-4 w-4 text-primary-foreground" />
               </button>
             </TooltipTrigger>
-            {collapsed && <TooltipContent side="right">{item.label}</TooltipContent>}
+            <TooltipContent side="right">Expand sidebar</TooltipContent>
           </Tooltip>
-        ))}
-      </nav>
+          <span className={`min-w-0 flex-1 truncate text-lg font-semibold tracking-tight ${collapsed ? "opacity-0" : "opacity-100"}`}>
+            Vibekit
+          </span>
+          <button
+            type="button"
+            onClick={onToggle}
+            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-sidebar-foreground/50 hover:bg-sidebar-accent hover:text-sidebar-foreground ${collapsed ? "pointer-events-none opacity-0" : "opacity-100"}`}
+          >
+            <ChevronsLeft className="h-4 w-4" />
+          </button>
+        </div>
 
-      {/* Footer */}
-      <div className="border-t border-sidebar-border px-3 py-3">
-        <DropdownMenu>
-          <DropdownMenuTrigger className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 outline-none hover:bg-sidebar-accent">
-            <Avatar className="h-7 w-7 shrink-0">
-              <AvatarFallback className="text-xs">BM</AvatarFallback>
-            </Avatar>
-            <div className="min-w-0 flex-1 text-left">
-              <p className="truncate text-sm font-medium">Bernard M.</p>
-              <p className="truncate text-xs text-sidebar-foreground/50">
-                bernard@example.com
-              </p>
-            </div>
-            <ChevronDown className="h-3.5 w-3.5 shrink-0 text-sidebar-foreground/50" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent side="top" align="start" className="w-56">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <User className="mr-2 h-4 w-4" />
-              Profile
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <CreditCard className="mr-2 h-4 w-4" />
-              Billing
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Settings className="mr-2 h-4 w-4" />
-              Settings
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive">
-              <LogOut className="mr-2 h-4 w-4" />
-              Sign out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* Navigation */}
+        <nav className="flex-1 space-y-1 px-2 py-2">
+          <p className={`px-2 py-1.5 text-xs font-medium text-sidebar-foreground/50 ${collapsed ? "opacity-0" : "opacity-100"}`}>
+            Navigation
+          </p>
+          {navItems.map((item) => (
+            <Tooltip key={item.label} open={collapsed ? undefined : false}>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  className={`flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors ${
+                    item.active
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                  }`}
+                >
+                  <item.icon className="h-4 w-4 shrink-0" />
+                  <span className={`min-w-0 flex-1 truncate text-left ${collapsed ? "opacity-0" : "opacity-100"}`}>
+                    {item.label}
+                  </span>
+                  {item.badge && (
+                    <Badge
+                      variant="secondary"
+                      className={`h-5 shrink-0 min-w-[20px] justify-center px-1.5 text-[10px] ${collapsed ? "opacity-0" : "opacity-100"}`}
+                    >
+                      {item.badge}
+                    </Badge>
+                  )}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">{item.label}</TooltipContent>
+            </Tooltip>
+          ))}
+        </nav>
+
+        {/* Footer */}
+        <div className="border-t border-sidebar-border px-2 py-3">
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 outline-none hover:bg-sidebar-accent">
+              <Avatar className="h-7 w-7 shrink-0">
+                <AvatarFallback className="text-xs">BM</AvatarFallback>
+              </Avatar>
+              <div className={`min-w-0 flex-1 text-left ${collapsed ? "opacity-0" : "opacity-100"}`}>
+                <p className="truncate text-sm font-medium">Bernard M.</p>
+                <p className="truncate text-xs text-sidebar-foreground/50">
+                  bernard@example.com
+                </p>
+              </div>
+              <ChevronDown className={`h-3.5 w-3.5 shrink-0 text-sidebar-foreground/50 ${collapsed ? "opacity-0" : "opacity-100"}`} />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent side="top" align={collapsed ? "center" : "start"} className="w-56">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <User className="mr-2 h-4 w-4" />
+                Profile
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <CreditCard className="mr-2 h-4 w-4" />
+                Billing
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Settings className="mr-2 h-4 w-4" />
+                Settings
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="text-destructive">
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </div>
   );

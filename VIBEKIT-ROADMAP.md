@@ -1,6 +1,6 @@
 # Vibekit Strategic Roadmap
 
-**Date:** 2026-03-06
+**Date:** 2026-03-07
 **Purpose:** Transform vibekit from a UI template into a product-building platform that helps makers go from idea to validated, production-ready app.
 
 ---
@@ -25,8 +25,11 @@ After building HomeBase and analyzing competitors (Lovable at $6.6B, v0, Bolt, R
 | v0 (Vercel) | UI component excellence | UI-only, not full-stack | Full-stack, production-ready |
 | Bolt (StackBlitz) | Fastest iteration (diffs) | Browser-only, no local dev | You own the code, local-first |
 | Replit Agent | Multi-agent verification | Platform lock-in | Eject anytime, standard Next.js |
+| Base44 (Wix, $80M acq) | Zero-setup full-stack, fastest to deploy | Proprietary SDK lock-in, AI breaks on complex apps, credits burn on failures (Trustpilot 2.2/5) | Full ownership, local-first, quality doesn't degrade at feature #11 |
 
 **Universal problem none solve well:** The build-to-production gap. AI generates 80% of an app, then users spend 3x longer debugging the last 20%. Vibekit's structural quality constraints (mandatory states, spacing rules, page completeness) are already the answer — they just need to go deeper.
+
+**Key insight from Base44's trajectory:** Zero-setup full-stack (built-in DB + auth + hosting) is the feature users want most — Base44 hit $100M ARR on this alone. But their 2.2/5 Trustpilot rating proves speed without quality is a trap: users love the first 10 minutes and hate the next 10 hours debugging. Vibekit already has the full stack (Prisma + tRPC + Auth.js) with zero external setup. The moat is that the 11th feature works as well as the 1st.
 
 ---
 
@@ -86,6 +89,8 @@ Document this as a concrete template in `.claude/docs/adding-a-page.md`.
 
 *Transform the interview from "what do you want?" to "let's figure out what you should build."*
 
+**Lesson from Base44:** Their "Discuss" mode (ask the AI questions without triggering code changes) is their most-loved feature. The key insight: **separate the thinking conversation from the building conversation**. The interview phase should feel like a strategic discussion, not a code generation session. Keep it token-efficient — plan cheap, generate once, generate right.
+
 ### 2.1 Idea Validation Phase (New)
 
 Before building anything, ask questions that a good product advisor would:
@@ -110,7 +115,7 @@ Before building anything, ask questions that a good product advisor would:
 - "You said you need payments — but do you need them in v1? Most successful apps launch free, add payments after validating demand."
 - "Charts/analytics is a nice-to-have. Unless your app IS analytics, delay this until v2."
 
-### 2.2 Structured Intent File (Enhanced)
+### 2.2 Structured Intent File + Build Plan Approval
 
 Expand `.vibekit/intent.json` to capture validation context:
 
@@ -131,6 +136,20 @@ Expand `.vibekit/intent.json` to capture validation context:
   "interviewComplete": true
 }
 ```
+
+**Build Plan Approval** — After the interview, before any code generation, present the full build plan to the user for approval:
+
+> "Here's what I'm going to build:
+> - **3 models**: Household, Chore, Bill (+ User from auth)
+> - **3 routers**: household, chore, bill (5 procedures each)
+> - **6 pages**: Dashboard, Chores list, Chore detail, Bills list, Bill detail, Settings
+> - **1 skill**: email
+> - **No landing page** (internal tool — `/` redirects to `/sign-in`)
+> - **Estimated: ~25 min build time**
+>
+> Approve this plan, or tell me what to change."
+
+This prevents the Base44 anti-pattern where users burn credits/tokens on generation they didn't want. Plan cheap, generate once.
 
 ### 2.3 Market Research During Interview
 
@@ -309,7 +328,7 @@ Track token/time usage during builds:
 | **P0** | ~~1.2 Generate wired pages during build~~ | ~~Every `/setup` produces working apps~~ | ✅ Done (2026-03-06) |
 | **P0** | ~~1.3 Form integration pattern~~ | ~~Forms actually work~~ | ✅ Done (2026-03-06) |
 | **P1** | 2.1 Idea validation phase | Product quality, not just code quality | Medium |
-| **P1** | 2.2 Enhanced intent file | Captures validation context | Small |
+| **P1** | 2.2 Structured intent + build plan approval | Captures validation context, presents plan before generating | Small |
 | **P1** | 2.4 Scope gating | Prevents v1 bloat | Small |
 | **P1** | 3.1 Dynamic landing page | No more copy-paste templates | Medium |
 | **P1** | 3.3 Dynamic seed data | First experience feels real | Small |
@@ -342,7 +361,7 @@ After implementing P0-P1:
 
 ## The Core Thesis
 
-Every AI app builder races to generate code faster. Lovable, Bolt, v0 — they compete on speed. But speed to a broken app is worthless.
+Every AI app builder races to generate code faster. Lovable, Bolt, v0, Base44 — they compete on speed. But speed to a broken app is worthless. Base44 proved this definitively: $100M ARR from zero-setup full-stack speed, but a 2.2/5 Trustpilot rating because the apps break when they get complex. Users love the first 10 minutes and hate the next 10 hours.
 
 Vibekit's thesis: **The fastest path from idea to product isn't generating more code — it's generating the RIGHT code, for the RIGHT problem, with zero slop.**
 
@@ -352,6 +371,7 @@ That means:
 3. **Everything works** out of the box (wired data, not hardcoded demos)
 4. **Quality is structural**, not aspirational (mandatory states, spacing rules, verification)
 5. **You own the code** and can keep building forever (no platform lock-in, no credit burn)
+6. **Plan cheap, generate once** — present the full build plan before writing code (no wasted tokens on unwanted generation)
 
 The competition is building faster hammers. Vibekit should be the advisor that makes sure you're hitting the right nail.
 
