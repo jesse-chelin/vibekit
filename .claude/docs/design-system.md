@@ -66,6 +66,13 @@ Use the `iconColor` prop on `StatCard` to set these automatically.
 | `border-border` | Default borders — cards, dividers |
 | `border-input` | Form input borders |
 
+### Overlay
+| Token | Usage |
+|-------|-------|
+| `--overlay-bg` | Frosted-glass background for all floating surfaces (dialogs, sheets, dropdowns, popovers, tooltips, chart tooltips). Applied via inline `style={{ backgroundColor: "var(--overlay-bg)", backdropFilter: "blur(16px) saturate(1.4)", WebkitBackdropFilter: "blur(16px) saturate(1.4)" }}` |
+
+This replaces the old solid `bg-popover` on floating surfaces. All overlay components (Dialog, Sheet, DropdownMenu, Popover, Select, ChartTooltipContent) already have this applied — do NOT override it with `bg-*` classes.
+
 ### Status Colors
 | State | Background | Text |
 |-------|------------|------|
@@ -234,14 +241,46 @@ Features: grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6
 
 ## Shadows & Elevation
 
-Elevation comes primarily from surface color differences, not shadows. Shadows are subtle and used sparingly:
+Elevation comes primarily from surface color differences, not shadows. A full shadow scale is defined in CSS custom properties (`--shadow-2xs` through `--shadow-2xl`) with light/dark variants — dark mode shadows are more opaque.
 
 - Cards at rest: border only, no shadow
 - Cards on hover (interactive): `hover:shadow-sm` via the `hover-lift` CSS class
 - Primary CTA buttons: `shadow-sm` for subtle depth
-- Dialogs: `shadow-lg`
-- Dropdowns: `shadow-md`
-- Do NOT use `shadow-xl` or `shadow-2xl`
+- Dropdowns/popovers: `shadow-md`
+- Dialogs/sheets: `shadow-lg`
+- Chart tooltips: `shadow-xl`
+
+### Border Radius
+
+Base radius: `--radius: 0.75rem` (12px). Derived values:
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| `rounded-sm` | `calc(0.75rem - 4px)` = 8px | Small elements (badges, inline tags) |
+| `rounded-md` | `calc(0.75rem - 2px)` = 10px | Buttons, inputs, icon containers |
+| `rounded-lg` | `0.75rem` = 12px | Cards, dialogs, sheets |
+| `rounded-xl` | `calc(0.75rem + 4px)` = 16px | Large containers, hero sections |
+
+## Interactive Glow Effect
+
+Checkbox, RadioGroup, and Switch all have a subtle primary-colored glow when checked/active:
+
+```
+data-[state=checked]:shadow-[0_0_6px_1px] data-[state=checked]:shadow-primary/40
+```
+
+This is already applied to all three components. Do NOT remove it or add custom glow effects — use this pattern consistently for all toggleable inputs.
+
+## Letter Spacing
+
+A base `--tracking-normal: -0.01em` is applied to the body. The tracking scale is:
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| `tracking-tighter` | -0.06em | Large marketing headings |
+| `tracking-tight` | -0.035em | Page titles, stat card values |
+| `tracking-normal` | -0.01em | Body text (default) |
+| `tracking-wide` | 0.015em | All-caps labels (rarely used) |
 
 ### Hover Utilities
 

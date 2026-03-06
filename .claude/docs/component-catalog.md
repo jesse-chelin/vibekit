@@ -36,6 +36,8 @@ These are the ~30 curated components. Do NOT add new ones without explicit user 
 | Textarea | `@/components/ui/textarea` | Multi-line text input |
 | Sonner | `sonner` | Toast notifications (`toast.success("Done!")`) |
 | Tooltip | `@/components/ui/tooltip` | Hover hints. NEVER put critical info in tooltips (not accessible on mobile) |
+| Chart | `@/components/ui/chart` | Chart container, tooltip, legend for Recharts. See ChartCard pattern below |
+| FieldError | `@/components/ui/field-error` | Form validation error message. Renders as `<p role="alert">` with destructive color. Returns null when empty |
 
 ## Pattern Components
 
@@ -83,8 +85,34 @@ import { StatCard } from "@/components/patterns/stat-card";
 />
 ```
 **When:** Dashboard metrics, KPI displays. Use in a grid: `grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4`
-**Props:** `iconColor` accepts a Tailwind text color class (e.g., `text-blue-500`, `text-emerald-500`) — the icon container auto-generates a matching tinted background. Use a different color for each stat to add visual variety.
+**Props:** `iconColor` accepts a Tailwind text color class (e.g., `text-blue-500`, `text-emerald-500`) — the icon container auto-generates a matching tinted background. Use a different color for each stat to add visual variety. `value` accepts string or number — numbers get a slot-machine rolling animation on mount and value changes.
 **Wrap in motion:** `StaggerList` on the grid + `StaggerItem` on each card for entrance animation.
+
+### ChartCard
+```tsx
+import { ChartCard } from "@/components/patterns/chart-card";
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
+import { AreaChart, Area, CartesianGrid, XAxis, YAxis } from "recharts";
+
+const config = {
+  revenue: { label: "Revenue", color: "var(--chart-1)" },
+} satisfies ChartConfig;
+
+<ChartCard title="Revenue" description="Monthly revenue over 6 months.">
+  <ChartContainer config={config} className="h-[250px] w-full">
+    <AreaChart data={data} accessibilityLayer>
+      <CartesianGrid vertical={false} />
+      <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
+      <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+      <ChartTooltip content={<ChartTooltipContent indicator="line" />} />
+      <Area type="monotone" dataKey="revenue" stroke="var(--color-revenue)" fill="url(#gradient)" strokeWidth={2} />
+    </AreaChart>
+  </ChartContainer>
+</ChartCard>
+```
+**When:** Any chart visualization — wraps the chart in a Card with consistent header styling.
+**Chart types available:** `AreaChart`, `BarChart`, `LineChart`, `PieChart` from `recharts`. Always use `ChartContainer` (provides responsive sizing + theme CSS vars) and `ChartTooltip` with `ChartTooltipContent` (frosted-glass tooltip matching overlay style).
+**Colors:** Use `var(--chart-1)` through `var(--chart-5)` for chart data series. Define colors in the `ChartConfig` object.
 
 ### DataTable
 ```tsx
@@ -222,3 +250,6 @@ import { NotificationCenter } from "@/components/patterns/notification-center";
 4. **Putting critical info in Tooltip** — tooltips don't work on mobile (no hover)
 5. **Using Tabs for navigation** — Tabs are for content switching within a page, not page navigation
 6. **Skipping Skeleton** in loading.tsx — always use skeleton shapes that match the real content layout
+7. **Writing custom form error `<p>` tags** instead of using `FieldError` component — it handles null children, has `role="alert"` for a11y, and uses `text-destructive` consistently
+8. **Using `text-white` or raw colors** on badges/indicators — use `text-destructive-foreground`, `text-primary-foreground`, etc.
+9. **Building custom chart wrappers** instead of using `ChartCard` + `ChartContainer` — they provide consistent styling and frosted-glass tooltips
