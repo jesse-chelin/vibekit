@@ -2,17 +2,20 @@
 
 ## UI Primitives (shadcn/ui)
 
-These are the ~30 curated components. Do NOT add new ones without explicit user request.
+These are the ~37 curated components. Do NOT add new ones without explicit user request.
 
 | Component | Import | When to Use |
 |-----------|--------|-------------|
+| Accordion | `@/components/ui/accordion` | Expandable content sections. Chevron animates on open/close. Use `type="single"` or `type="multiple"` |
+| Alert | `@/components/ui/alert` | Inline status messages. Variants: `default`, `destructive`, `warning`, `success`. Pair with `AlertTitle` + `AlertDescription` |
 | Avatar | `@/components/ui/avatar` | User profile images |
 | Badge | `@/components/ui/badge` | Status labels, tags, counts |
 | Breadcrumb | `@/components/ui/breadcrumb` | Navigation hierarchy in topbar |
-| Button | `@/components/ui/button` | All actions. Variants: `default`, `destructive`, `outline`, `ghost`, `link` |
+| Button | `@/components/ui/button` | All actions. Variants: `default`, `destructive`, `outline`, `ghost`, `link`. Sizes: `default`, `sm`, `lg`, `icon`, `icon-sm`, `icon-xs`, `icon-lg` |
 | Calendar | `@/components/ui/calendar` | Date picking in forms |
 | Card | `@/components/ui/card` | Content containers. Use `CardHeader` + `CardContent` |
 | Checkbox | `@/components/ui/checkbox` | Multiple selections, todo items |
+| Collapsible | `@/components/ui/collapsible` | Show/hide content sections. Lighter than Accordion — use for single collapsible areas |
 | Command | `@/components/ui/command` | Command palette (Cmd+K search) |
 | Dialog | `@/components/ui/dialog` | Modal dialogs. Use Drawer on mobile instead |
 | Drawer | `@/components/ui/drawer` | Bottom sheets for mobile. Pair with Dialog for responsive |
@@ -34,7 +37,9 @@ These are the ~30 curated components. Do NOT add new ones without explicit user 
 | Table | `@/components/ui/table` | Data display (use with DataTable pattern) |
 | Tabs | `@/components/ui/tabs` | Tabbed content (settings, detail views) |
 | Textarea | `@/components/ui/textarea` | Multi-line text input |
-| Sonner | `sonner` | Toast notifications (`toast.success("Done!")`) |
+| Toggle | `@/components/ui/toggle` | Binary on/off button. Variants: `default`, `outline`. Sizes: `default`, `sm`, `lg`. Use for toolbar formatting buttons |
+| Toggle Group | `@/components/ui/toggle-group` | Group of toggles with shared variant/size. Use `type="single"` or `type="multiple"` for toolbar button groups |
+| Sonner | `@/components/ui/sonner` | Toast notifications. Import `Toaster` in layout, call `toast.success("Done!")` from `sonner` package. Position: bottom-right, richColors, closeButton |
 | Tooltip | `@/components/ui/tooltip` | Hover hints. NEVER put critical info in tooltips (not accessible on mobile) |
 | Chart | `@/components/ui/chart` | Chart container, tooltip, legend for Recharts. See ChartCard pattern below |
 | FieldError | `@/components/ui/field-error` | Form validation error message. Renders as `<p role="alert">` with destructive color. Returns null when empty |
@@ -220,6 +225,92 @@ import { LiveIndicator } from "@/components/patterns/live-indicator";
 import { NotificationCenter } from "@/components/patterns/notification-center";
 ```
 **When:** Bell icon with unread count badge. Already in topbar.
+
+### Combobox
+```tsx
+import { Combobox } from "@/components/patterns/combobox";
+
+<Combobox
+  options={[
+    { value: "next", label: "Next.js" },
+    { value: "remix", label: "Remix" },
+    { value: "astro", label: "Astro" },
+  ]}
+  value={framework}
+  onValueChange={setFramework}
+  placeholder="Select framework..."
+  searchPlaceholder="Search frameworks..."
+/>
+```
+**When:** Searchable dropdown selection. Prefer over plain `Select` when the option list is long (5+) and users need to search. Built on `Command` + `Popover`. Width auto-matches trigger.
+
+### CopyButton
+```tsx
+import { CopyButton } from "@/components/patterns/copy-button";
+
+<CopyButton value={apiKey} />
+```
+**When:** Copy text to clipboard. Shows check icon with `text-success` for 2s after copy. Uses `size="icon-sm"` (32px). Pair with `truncate` text for long IDs/URLs.
+
+### DatePicker
+```tsx
+import { DatePicker } from "@/components/patterns/date-picker";
+
+<DatePicker
+  date={selectedDate}
+  onDateChange={setSelectedDate}
+  placeholder="Pick a date"
+/>
+```
+**When:** Date selection in forms. Built on `Calendar` + `Popover`. Displays formatted date via `date-fns` (`format(date, "PPP")`).
+
+### FilterBar
+```tsx
+import { FilterBar } from "@/components/patterns/filter-bar";
+
+<FilterBar
+  searchValue={search}
+  onSearchChange={setSearch}
+  filters={[
+    { key: "status", label: "Status", options: [
+      { value: "active", label: "Active" },
+      { value: "archived", label: "Archived" },
+    ]},
+    { key: "priority", label: "Priority", options: [
+      { value: "high", label: "High" },
+      { value: "low", label: "Low" },
+    ]},
+  ]}
+  activeFilters={activeFilters}
+  onFilterChange={(key, value) => setActiveFilters(prev => ({ ...prev, [key]: value }))}
+/>
+```
+**When:** Search + multi-filter bar above data tables or lists. Shows search input with icon + select dropdowns per filter + active filter badges with remove buttons. Use alongside `DataTable` or custom lists.
+
+### Kbd
+```tsx
+import { Kbd } from "@/components/patterns/kbd";
+
+<Kbd>⌘K</Kbd>
+<Kbd>Ctrl</Kbd>+<Kbd>S</Kbd>
+```
+**When:** Displaying keyboard shortcuts inline. Monospace font, 10px, border + muted background. NOT a client component.
+
+### PricingCard
+```tsx
+import { PricingCard } from "@/components/patterns/pricing-card";
+
+<PricingCard
+  name="Pro"
+  price="$19"
+  period="/month"
+  description="For growing teams"
+  features={["Unlimited projects", "Priority support", "Advanced analytics"]}
+  cta="Get Started"
+  highlighted
+/>
+```
+**When:** Pricing plan display on marketing pages. Use in a grid: `grid-cols-1 md:grid-cols-3 gap-6`. The `highlighted` prop adds `border-primary`, `shadow-md`, and a "Popular" badge. NOT a client component.
 
 ## Layout Components
 

@@ -42,7 +42,14 @@ import {
   Send,
   Paperclip,
   ArrowRight,
+  Info,
+  Terminal,
+  Bold,
+  Italic,
+  Underline,
+  ChevronsUpDown,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -119,10 +126,30 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Toggle } from "@/components/ui/toggle";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { StatCard } from "@/components/patterns/stat-card";
 import { EmptyState } from "@/components/patterns/empty-state";
 import { ActivityFeed } from "@/components/patterns/activity-feed";
 import { ChartCard } from "@/components/patterns/chart-card";
+import { CopyButton } from "@/components/patterns/copy-button";
+import { Kbd } from "@/components/patterns/kbd";
+import { DatePicker } from "@/components/patterns/date-picker";
+import { Combobox } from "@/components/patterns/combobox";
+import { FilterBar } from "@/components/patterns/filter-bar";
+import { PricingCard } from "@/components/patterns/pricing-card";
 import {
   ChartContainer,
   ChartTooltip,
@@ -235,6 +262,35 @@ const projectDistributionConfig = {
 
 const CHART_COLORS = [
   "var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)",
+];
+
+const frameworkOptions = [
+  { value: "nextjs", label: "Next.js" },
+  { value: "remix", label: "Remix" },
+  { value: "astro", label: "Astro" },
+  { value: "nuxt", label: "Nuxt" },
+  { value: "sveltekit", label: "SvelteKit" },
+];
+
+const filterDefinitions = [
+  {
+    key: "status",
+    label: "Status",
+    options: [
+      { value: "active", label: "Active" },
+      { value: "completed", label: "Completed" },
+      { value: "archived", label: "Archived" },
+    ],
+  },
+  {
+    key: "priority",
+    label: "Priority",
+    options: [
+      { value: "high", label: "High" },
+      { value: "medium", label: "Medium" },
+      { value: "low", label: "Low" },
+    ],
+  },
 ];
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
@@ -409,6 +465,12 @@ function MockTopbar() {
 export default function ShowcasePage() {
   const [switchChecked, setSwitchChecked] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date>();
+  const [comboValue, setComboValue] = useState("");
+  const [filterSearch, setFilterSearch] = useState("");
+  const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
+  const [collapsibleOpen, setCollapsibleOpen] = useState(false);
+
   return (
     <TooltipProvider>
       <div className="flex h-screen bg-sidebar p-0">
@@ -549,14 +611,15 @@ export default function ShowcasePage() {
                 />
               </div>
 
-              {/* Tabs — Tasks / Activity / Settings / Archive */}
-              <Tabs defaultValue="tasks">
+              {/* Tabs — Overview / Activity / Components / Forms / Marketing */}
+              <Tabs defaultValue="overview">
                 <div className="flex items-center justify-between">
                   <TabsList>
-                    <TabsTrigger value="tasks">Tasks</TabsTrigger>
+                    <TabsTrigger value="overview">Overview</TabsTrigger>
                     <TabsTrigger value="activity">Activity</TabsTrigger>
-                    <TabsTrigger value="settings">Settings</TabsTrigger>
-                    <TabsTrigger value="empty">Archive</TabsTrigger>
+                    <TabsTrigger value="components">Components</TabsTrigger>
+                    <TabsTrigger value="forms">Forms</TabsTrigger>
+                    <TabsTrigger value="marketing">Marketing</TabsTrigger>
                   </TabsList>
                   <div className="flex items-center gap-2">
                     <Button variant="outline" size="sm">
@@ -570,8 +633,8 @@ export default function ShowcasePage() {
                   </div>
                 </div>
 
-                {/* Tasks Tab */}
-                <TabsContent value="tasks" className="mt-4">
+                {/* Overview Tab (formerly Tasks) */}
+                <TabsContent value="overview" className="mt-4">
                   <Card>
                     <CardHeader>
                       <div className="flex items-center justify-between">
@@ -759,113 +822,429 @@ export default function ShowcasePage() {
                   </div>
                 </TabsContent>
 
-                {/* Settings Tab */}
-                <TabsContent value="settings" className="mt-4">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Project Settings</CardTitle>
-                      <CardDescription>
-                        Configure your workspace preferences.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <div className="space-y-3">
-                          <Label htmlFor="ws-name">Workspace Name</Label>
-                          <Input id="ws-name" defaultValue="VibeKit" />
+                {/* Components Tab */}
+                <TabsContent value="components" className="mt-4">
+                  <div className="grid gap-6 lg:grid-cols-2">
+                    {/* Alerts */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Alerts</CardTitle>
+                        <CardDescription>Contextual feedback messages.</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <Alert>
+                          <Info className="h-4 w-4" />
+                          <AlertTitle>Information</AlertTitle>
+                          <AlertDescription>
+                            This is a default alert for general information.
+                          </AlertDescription>
+                        </Alert>
+                        <Alert variant="destructive">
+                          <AlertTriangle className="h-4 w-4" />
+                          <AlertTitle>Error</AlertTitle>
+                          <AlertDescription>
+                            Something went wrong. Please try again.
+                          </AlertDescription>
+                        </Alert>
+                        <Alert variant="warning">
+                          <AlertTriangle className="h-4 w-4" />
+                          <AlertTitle>Warning</AlertTitle>
+                          <AlertDescription>
+                            Your trial expires in 3 days.
+                          </AlertDescription>
+                        </Alert>
+                        <Alert variant="success">
+                          <CheckCircle2 className="h-4 w-4" />
+                          <AlertTitle>Success</AlertTitle>
+                          <AlertDescription>
+                            Your changes have been saved.
+                          </AlertDescription>
+                        </Alert>
+                      </CardContent>
+                    </Card>
+
+                    {/* Accordion */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Accordion</CardTitle>
+                        <CardDescription>Collapsible content sections.</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <Accordion type="single" collapsible>
+                          <AccordionItem value="item-1">
+                            <AccordionTrigger>What is VibeKit?</AccordionTrigger>
+                            <AccordionContent>
+                              VibeKit is a production-quality starter kit for building AI-powered web applications with Next.js, designed to go beyond demos.
+                            </AccordionContent>
+                          </AccordionItem>
+                          <AccordionItem value="item-2">
+                            <AccordionTrigger>Which components are included?</AccordionTrigger>
+                            <AccordionContent>
+                              Over 30 curated shadcn/ui primitives, plus pattern components like DataTable, StatCard, EmptyState, and more.
+                            </AccordionContent>
+                          </AccordionItem>
+                          <AccordionItem value="item-3">
+                            <AccordionTrigger>Can I customize the theme?</AccordionTrigger>
+                            <AccordionContent>
+                              Yes! VibeKit uses CSS custom properties for all colors. Edit the tokens in globals.css to match your brand.
+                            </AccordionContent>
+                          </AccordionItem>
+                        </Accordion>
+                      </CardContent>
+                    </Card>
+
+                    {/* Collapsible */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Collapsible</CardTitle>
+                        <CardDescription>Toggle visibility of content.</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <Collapsible open={collapsibleOpen} onOpenChange={setCollapsibleOpen}>
+                          <div className="flex items-center justify-between rounded-md border px-4 py-2">
+                            <span className="text-sm font-medium">
+                              @vibekit/ui — 3 dependencies
+                            </span>
+                            <CollapsibleTrigger asChild>
+                              <Button variant="ghost" size="icon-xs">
+                                <ChevronsUpDown className="h-4 w-4" />
+                                <span className="sr-only">Toggle</span>
+                              </Button>
+                            </CollapsibleTrigger>
+                          </div>
+                          <CollapsibleContent className="mt-2 space-y-2">
+                            {["radix-ui", "class-variance-authority", "tailwind-merge"].map((dep) => (
+                              <div
+                                key={dep}
+                                className="rounded-md border px-4 py-2 text-sm font-mono"
+                              >
+                                {dep}
+                              </div>
+                            ))}
+                          </CollapsibleContent>
+                        </Collapsible>
+                      </CardContent>
+                    </Card>
+
+                    {/* Toggle & ToggleGroup */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Toggle & ToggleGroup</CardTitle>
+                        <CardDescription>Single and grouped toggle buttons.</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-2">Single toggle</p>
+                          <Toggle aria-label="Toggle italic">
+                            <Italic className="h-4 w-4" />
+                          </Toggle>
                         </div>
-                        <div className="space-y-3">
-                          <Label htmlFor="ws-url">Workspace URL</Label>
-                          <Input id="ws-url" defaultValue="vibekit app" aria-invalid="true" />
-                          <FieldError>URL cannot contain spaces.</FieldError>
+                        <Separator />
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-2">Text formatting</p>
+                          <ToggleGroup type="multiple" variant="outline">
+                            <ToggleGroupItem value="bold" aria-label="Toggle bold">
+                              <Bold className="h-4 w-4" />
+                            </ToggleGroupItem>
+                            <ToggleGroupItem value="italic" aria-label="Toggle italic">
+                              <Italic className="h-4 w-4" />
+                            </ToggleGroupItem>
+                            <ToggleGroupItem value="underline" aria-label="Toggle underline">
+                              <Underline className="h-4 w-4" />
+                            </ToggleGroupItem>
+                          </ToggleGroup>
                         </div>
-                      </div>
-                      <div className="space-y-3">
-                        <Label htmlFor="ws-desc">Description</Label>
-                        <Textarea
-                          id="ws-desc"
-                          placeholder="Describe your workspace..."
-                          rows={3}
-                          aria-invalid="true"
-                        />
-                        <FieldError>Description is required.</FieldError>
-                      </div>
-                      <div className="space-y-3">
-                        <Label htmlFor="ws-api">API Key</Label>
-                        <div className="relative">
-                          <Input
-                            id="ws-api"
-                            type={showPassword ? "text" : "password"}
-                            defaultValue="sk-vk-1234567890abcdef"
-                          />
+                      </CardContent>
+                    </Card>
+
+                    {/* Toast triggers */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Toasts</CardTitle>
+                        <CardDescription>Notification toasts via Sonner.</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex flex-wrap gap-2">
                           <Button
-                            variant="ghost"
-                            size="icon-xs"
-                            className="absolute right-2 top-1/2 -translate-y-1/2"
-                            onClick={() => setShowPassword(!showPassword)}
+                            variant="outline"
+                            size="sm"
+                            onClick={() => toast.success("Changes saved successfully!")}
                           >
-                            {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                            Success
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => toast.error("Something went wrong. Please try again.")}
+                          >
+                            Error
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => toast.info("A new version is available.")}
+                          >
+                            Info
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => toast.warning("Your session is about to expire.")}
+                          >
+                            Warning
                           </Button>
                         </div>
-                      </div>
-                      <div className="space-y-3">
-                        <Label>Default Priority</Label>
-                        <RadioGroup defaultValue="medium" className="flex gap-4">
-                          <div className="flex items-center gap-2">
-                            <RadioGroupItem value="low" id="s-low" />
-                            <Label htmlFor="s-low" className="font-normal">Low</Label>
+                      </CardContent>
+                    </Card>
+
+                    {/* Copy Button & Kbd */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Copy Button & Keyboard Shortcuts</CardTitle>
+                        <CardDescription>Clipboard copy and keyboard shortcut display.</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-2">Copy API key</p>
+                          <div className="flex items-center gap-2 rounded-md border px-3 py-2">
+                            <code className="flex-1 text-sm font-mono truncate">
+                              sk-vk-1234567890abcdef
+                            </code>
+                            <CopyButton value="sk-vk-1234567890abcdef" />
                           </div>
-                          <div className="flex items-center gap-2">
-                            <RadioGroupItem value="medium" id="s-medium" />
-                            <Label htmlFor="s-medium" className="font-normal">Medium</Label>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <RadioGroupItem value="high" id="s-high" />
-                            <Label htmlFor="s-high" className="font-normal">High</Label>
-                          </div>
-                        </RadioGroup>
-                      </div>
-                      <Separator />
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <Label>Email Notifications</Label>
-                          <p className="text-xs text-muted-foreground">
-                            Receive updates about project activity.
-                          </p>
                         </div>
-                        <Switch checked={switchChecked} onCheckedChange={setSwitchChecked} />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <Label>Two-Factor Authentication</Label>
-                          <p className="text-xs text-muted-foreground">
-                            Add an extra layer of security.
-                          </p>
+                        <Separator />
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-2">Keyboard shortcuts</p>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex items-center justify-between">
+                              <span>Search</span>
+                              <span className="flex items-center gap-1">
+                                <Kbd>⌘</Kbd><Kbd>K</Kbd>
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span>Save</span>
+                              <span className="flex items-center gap-1">
+                                <Kbd>⌘</Kbd><Kbd>S</Kbd>
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span>New project</span>
+                              <span className="flex items-center gap-1">
+                                <Kbd>⌘</Kbd><Kbd>N</Kbd>
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                        <Switch />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Checkbox id="s-agree" defaultChecked />
-                        <Label htmlFor="s-agree" className="font-normal">
-                          Allow team members to invite others
-                        </Label>
-                      </div>
-                    </CardContent>
-                    <CardFooter className="justify-end gap-2 border-t pt-6">
-                      <Button variant="outline">Cancel</Button>
-                      <Button>Save Changes</Button>
-                    </CardFooter>
-                  </Card>
+                      </CardContent>
+                    </Card>
+                  </div>
                 </TabsContent>
 
-                {/* Empty Tab */}
-                <TabsContent value="empty" className="mt-4">
-                  <EmptyState
-                    icon={Inbox}
-                    title="No archived items"
-                    description="Items you archive will appear here for easy reference."
-                    action={{ label: "Browse Projects", onClick: () => {} }}
-                  />
+                {/* Forms Tab */}
+                <TabsContent value="forms" className="mt-4">
+                  <div className="grid gap-6 lg:grid-cols-2">
+                    {/* Date Picker & Combobox */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Date Picker</CardTitle>
+                        <CardDescription>Select a date using a calendar popover.</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <Label>Due date</Label>
+                        <DatePicker date={selectedDate} onDateChange={setSelectedDate} />
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Combobox</CardTitle>
+                        <CardDescription>Searchable dropdown selection.</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <Label>Framework</Label>
+                        <Combobox
+                          options={frameworkOptions}
+                          value={comboValue}
+                          onValueChange={setComboValue}
+                          placeholder="Select a framework..."
+                          searchPlaceholder="Search frameworks..."
+                        />
+                      </CardContent>
+                    </Card>
+
+                    {/* Filter Bar */}
+                    <Card className="lg:col-span-2">
+                      <CardHeader>
+                        <CardTitle>Filter Bar</CardTitle>
+                        <CardDescription>Search with filter dropdowns and active filter badges.</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <FilterBar
+                          searchValue={filterSearch}
+                          onSearchChange={setFilterSearch}
+                          filters={filterDefinitions}
+                          activeFilters={activeFilters}
+                          onFilterChange={(key, value) =>
+                            setActiveFilters((prev) => ({ ...prev, [key]: value }))
+                          }
+                        />
+                      </CardContent>
+                    </Card>
+
+                    {/* Settings form (moved from Settings tab) */}
+                    <Card className="lg:col-span-2">
+                      <CardHeader>
+                        <CardTitle>Project Settings</CardTitle>
+                        <CardDescription>
+                          Configure your workspace preferences.
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-6">
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          <div className="space-y-3">
+                            <Label htmlFor="ws-name">Workspace Name</Label>
+                            <Input id="ws-name" defaultValue="VibeKit" />
+                          </div>
+                          <div className="space-y-3">
+                            <Label htmlFor="ws-url">Workspace URL</Label>
+                            <Input id="ws-url" defaultValue="vibekit app" aria-invalid="true" />
+                            <FieldError>URL cannot contain spaces.</FieldError>
+                          </div>
+                        </div>
+                        <div className="space-y-3">
+                          <Label htmlFor="ws-desc">Description</Label>
+                          <Textarea
+                            id="ws-desc"
+                            placeholder="Describe your workspace..."
+                            rows={3}
+                            aria-invalid="true"
+                          />
+                          <FieldError>Description is required.</FieldError>
+                        </div>
+                        <div className="space-y-3">
+                          <Label htmlFor="ws-api">API Key</Label>
+                          <div className="relative">
+                            <Input
+                              id="ws-api"
+                              type={showPassword ? "text" : "password"}
+                              defaultValue="sk-vk-1234567890abcdef"
+                            />
+                            <Button
+                              variant="ghost"
+                              size="icon-xs"
+                              className="absolute right-2 top-1/2 -translate-y-1/2"
+                              onClick={() => setShowPassword(!showPassword)}
+                            >
+                              {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="space-y-3">
+                          <Label>Default Priority</Label>
+                          <RadioGroup defaultValue="medium" className="flex gap-4">
+                            <div className="flex items-center gap-2">
+                              <RadioGroupItem value="low" id="s-low" />
+                              <Label htmlFor="s-low" className="font-normal">Low</Label>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <RadioGroupItem value="medium" id="s-medium" />
+                              <Label htmlFor="s-medium" className="font-normal">Medium</Label>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <RadioGroupItem value="high" id="s-high" />
+                              <Label htmlFor="s-high" className="font-normal">High</Label>
+                            </div>
+                          </RadioGroup>
+                        </div>
+                        <Separator />
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-0.5">
+                            <Label>Email Notifications</Label>
+                            <p className="text-xs text-muted-foreground">
+                              Receive updates about project activity.
+                            </p>
+                          </div>
+                          <Switch checked={switchChecked} onCheckedChange={setSwitchChecked} />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-0.5">
+                            <Label>Two-Factor Authentication</Label>
+                            <p className="text-xs text-muted-foreground">
+                              Add an extra layer of security.
+                            </p>
+                          </div>
+                          <Switch />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Checkbox id="s-agree" defaultChecked />
+                          <Label htmlFor="s-agree" className="font-normal">
+                            Allow team members to invite others
+                          </Label>
+                        </div>
+                      </CardContent>
+                      <CardFooter className="justify-end gap-2 border-t pt-6">
+                        <Button variant="outline">Cancel</Button>
+                        <Button>Save Changes</Button>
+                      </CardFooter>
+                    </Card>
+                  </div>
+                </TabsContent>
+
+                {/* Marketing Tab */}
+                <TabsContent value="marketing" className="mt-4">
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-lg font-medium">Pricing Cards</h3>
+                      <p className="text-sm text-muted-foreground">Pricing tier comparison layout.</p>
+                    </div>
+                    <div className="grid gap-6 md:grid-cols-3">
+                      <PricingCard
+                        name="Free"
+                        price="$0"
+                        period="/month"
+                        description="For individuals just getting started."
+                        features={[
+                          "Up to 3 projects",
+                          "Basic analytics",
+                          "Community support",
+                          "1 GB storage",
+                        ]}
+                        cta="Get Started"
+                      />
+                      <PricingCard
+                        name="Pro"
+                        price="$19"
+                        period="/month"
+                        description="For growing teams and professionals."
+                        features={[
+                          "Unlimited projects",
+                          "Advanced analytics",
+                          "Priority support",
+                          "100 GB storage",
+                          "Custom integrations",
+                        ]}
+                        cta="Start Free Trial"
+                        highlighted
+                      />
+                      <PricingCard
+                        name="Enterprise"
+                        price="$99"
+                        period="/month"
+                        description="For large organizations with custom needs."
+                        features={[
+                          "Everything in Pro",
+                          "SSO & SAML",
+                          "Dedicated account manager",
+                          "Unlimited storage",
+                          "SLA guarantee",
+                          "Custom contracts",
+                        ]}
+                        cta="Contact Sales"
+                      />
+                    </div>
+                  </div>
                 </TabsContent>
               </Tabs>
 

@@ -4,7 +4,7 @@
 
 Vibekit exists to produce **production-quality apps, not demos**. The #1 criticism of AI-generated apps is that they're "slop" — they work on the happy path but break everywhere else. Vibekit prevents this structurally:
 
-1. **Constrained output** — 30 curated components, fixed spacing scale, 4 animation presets. You can't produce inconsistent UI because the design system won't allow it.
+1. **Constrained output** — ~37 curated components, fixed spacing scale, 4 animation presets. You can't produce inconsistent UI because the design system won't allow it.
 2. **Beyond the happy path** — Empty states, error states, loading states are mandatory from day one. A page missing these is considered incomplete, not "almost done."
 3. **Real-world stress testing** — Every page must handle: 0 items, 1 item, 100+ items, very long text, missing optional fields, slow networks, API failures. Not just the golden demo.
 4. **You own the code** — Every line is readable, modifiable, deployable standard Next.js/TypeScript. No black box, no vendor lock-in, no sandbox.
@@ -319,7 +319,7 @@ Page padding is ALWAYS `p-4 md:p-6`. Every page. No exceptions. This single rule
 2. **Mobile-first**: Start with mobile layout, add responsive breakpoints (`sm`, `md`, `lg`). Touch targets ≥ 44px.
 3. **Information-dense**: Default body text is `text-sm` (14px). Page titles: `text-2xl font-semibold tracking-tight`. Section titles: `text-lg font-medium`.
 4. **Constrained animations**: Only use presets from `@/components/shared/motion.tsx` — fadeIn, slideUp, scaleIn, staggerChildren. No custom animations.
-5. **Curated components only**: Only use the ~30 installed shadcn/ui components. Do not add new ones without explicit user request.
+5. **Curated components only**: Only use the ~37 installed shadcn/ui components. Do not add new ones without explicit user request.
 6. **Skeleton loading**: Every page MUST have a `loading.tsx` with layout-matching skeletons.
 7. **Empty states**: Every list/table MUST have an `EmptyState` with icon, helpful message, and action button.
 8. **Error states**: Every data-fetching component MUST handle errors gracefully with a retry option.
@@ -336,7 +336,7 @@ Page padding is ALWAYS `p-4 md:p-6`. Every page. No exceptions. This single rule
 - DO NOT use raw SQL — always use Prisma
 - DO NOT create client components unless they need interactivity
 - DO NOT use `any` type — use proper TypeScript types
-- DO NOT add shadcn/ui components not in the curated set
+- DO NOT add shadcn/ui components not in the ~37 curated set
 - DO NOT create custom animations beyond the 4 presets
 - DO NOT skip Zod validation on tRPC inputs
 - DO NOT use ad-hoc padding values — use `p-4 md:p-6` for page content, always
