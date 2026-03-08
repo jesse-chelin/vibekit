@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
 @font-face {
   font-family: "Geist Sans";
@@ -17,44 +18,44 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #f7f7f8;
-  --foreground: #1b1b1f;
+  --background: #f8f7f6;
+  --foreground: #1c1b1a;
   --card: #ffffff;
-  --card-foreground: #1b1b1f;
+  --card-foreground: #1c1b1a;
   --popover: #ffffff;
-  --popover-foreground: #1b1b1f;
-  --overlay-bg: rgba(255, 255, 255, 0.80);
-  --primary: #5e6ad2;
+  --popover-foreground: #1c1b1a;
+  --overlay-bg: rgba(255, 255, 254, 0.80);
+  --primary: #2AB4A0;
   --primary-foreground: #ffffff;
-  --secondary: #eeeff2;
-  --secondary-foreground: #1b1b1f;
-  --muted: #eeeff2;
-  --muted-foreground: #6b6f76;
-  --accent: #ebebef;
-  --accent-foreground: #1b1b1f;
+  --secondary: #f0eeec;
+  --secondary-foreground: #1c1b1a;
+  --muted: #f0eeec;
+  --muted-foreground: #74706b;
+  --accent: #eceae7;
+  --accent-foreground: #1c1b1a;
   --destructive: #d44040;
   --destructive-foreground: #ffffff;
   --success: #4cb782;
   --success-foreground: #ffffff;
   --warning: #e8a33e;
-  --warning-foreground: #1b1b1f;
-  --border: #e0e1e6;
-  --input: #e0e1e6;
-  --ring: #5e6ad2;
-  --chart-1: #5e6ad2;
-  --chart-2: #4cb782;
-  --chart-3: #e8a33e;
-  --chart-4: #d44040;
-  --chart-5: #b36bd4;
-  --sidebar: #f3f3f6;
-  --sidebar-foreground: #1b1b1f;
-  --sidebar-primary: #5e6ad2;
+  --warning-foreground: #1c1b1a;
+  --border: #e3e0dc;
+  --input: #e3e0dc;
+  --ring: #2AB4A0;
+  --chart-1: #6C7AE0;
+  --chart-2: #3DBDA7;
+  --chart-3: #E0965C;
+  --chart-4: #D4698A;
+  --chart-5: #9B8AE0;
+  --sidebar: #f4f2f0;
+  --sidebar-foreground: #1c1b1a;
+  --sidebar-primary: #2AB4A0;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #e8e9ed;
-  --sidebar-accent-foreground: #1b1b1f;
-  --sidebar-border: #e0e1e6;
-  --sidebar-ring: #5e6ad2;
-  --radius: 6px;
+  --sidebar-accent: #eae7e4;
+  --sidebar-accent-foreground: #1c1b1a;
+  --sidebar-border: #e3e0dc;
+  --sidebar-ring: #2AB4A0;
+  --radius: 8px;
   --tracking-normal: -0.01em;
   --spacing: 0.25rem;
   --shadow-2xs: 0 1px 1px rgba(0, 0, 0, 0.04);
@@ -68,43 +69,43 @@
 }
 
 .dark {
-  --background: #1e1f20;
-  --foreground: #e2e2e5;
-  --card: #232427;
-  --card-foreground: #e2e2e5;
-  --popover: #2a2b2f;
-  --popover-foreground: #e2e2e5;
-  --overlay-bg: rgba(35, 36, 39, 0.80);
-  --primary: #5e6ad2;
+  --background: #201f1e;
+  --foreground: #e5e3e0;
+  --card: #272524;
+  --card-foreground: #e5e3e0;
+  --popover: #2e2c2a;
+  --popover-foreground: #e5e3e0;
+  --overlay-bg: rgba(39, 37, 36, 0.80);
+  --primary: #2AB4A0;
   --primary-foreground: #ffffff;
-  --secondary: #2c2d31;
-  --secondary-foreground: #e2e2e5;
-  --muted: #2c2d31;
-  --muted-foreground: #8b8b93;
-  --accent: #2c2d31;
-  --accent-foreground: #e2e2e5;
+  --secondary: #302e2c;
+  --secondary-foreground: #e5e3e0;
+  --muted: #302e2c;
+  --muted-foreground: #908b85;
+  --accent: #302e2c;
+  --accent-foreground: #e5e3e0;
   --destructive: #d44040;
   --destructive-foreground: #ffffff;
   --success: #4cb782;
   --success-foreground: #ffffff;
   --warning: #e8a33e;
-  --warning-foreground: #1e1f20;
-  --border: #333438;
-  --input: #333438;
-  --ring: #5e6ad2;
-  --chart-1: #5e6ad2;
-  --chart-2: #4cb782;
-  --chart-3: #e8a33e;
-  --chart-4: #d44040;
-  --chart-5: #b36bd4;
-  --sidebar: #1d1e1f;
-  --sidebar-foreground: #e2e2e5;
-  --sidebar-primary: #5e6ad2;
+  --warning-foreground: #201f1e;
+  --border: #3a3734;
+  --input: #3a3734;
+  --ring: #2AB4A0;
+  --chart-1: #6C7AE0;
+  --chart-2: #3DBDA7;
+  --chart-3: #E0965C;
+  --chart-4: #D4698A;
+  --chart-5: #9B8AE0;
+  --sidebar: #1e1d1c;
+  --sidebar-foreground: #e5e3e0;
+  --sidebar-primary: #2AB4A0;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #2a2b2e;
-  --sidebar-accent-foreground: #e2e2e5;
-  --sidebar-border: #2a2b2e;
-  --sidebar-ring: #5e6ad2;
+  --sidebar-accent: #2c2a28;
+  --sidebar-accent-foreground: #e5e3e0;
+  --sidebar-border: #2c2a28;
+  --sidebar-ring: #2AB4A0;
   --shadow-2xs: 0 1px 1px rgba(0, 0, 0, 0.12);
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.20);
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.25);
@@ -185,6 +186,30 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+
+  *:hover {
+    scrollbar-color: var(--border) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 3px;
+  }
+
+  *:hover::-webkit-scrollbar-thumb {
+    background: var(--border);
   }
 
   body {
@@ -225,15 +250,38 @@
   transform: scale(0.98);
 }
 
-/* Sheet — Apple-esque animation curves */
-[data-slot="sheet-overlay"] {
+/* Sheet — gravity-feel slide animation */
+[data-slot="sheet-overlay"][data-state="open"] {
+  animation-duration: 300ms;
+  animation-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+[data-slot="sheet-overlay"][data-state="closed"] {
+  animation-duration: 200ms;
   animation-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 [data-slot="sheet-content"][data-state="open"] {
-  animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+  animation-duration: 400ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
 }
 [data-slot="sheet-content"][data-state="closed"] {
+  animation-duration: 200ms;
+  animation-timing-function: cubic-bezier(0.5, 0, 1, 1);
+}
+
+/* Popover & Dropdown — subtle micro-animations */
+[data-slot="popover-content"][data-state="open"],
+[data-slot="dropdown-menu-content"][data-state="open"],
+[data-slot="dropdown-menu-sub-content"][data-state="open"] {
+  animation-duration: 120ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  --tw-enter-scale: 0.98;
+}
+[data-slot="popover-content"][data-state="closed"],
+[data-slot="dropdown-menu-content"][data-state="closed"],
+[data-slot="dropdown-menu-sub-content"][data-state="closed"] {
+  animation-duration: 80ms;
   animation-timing-function: cubic-bezier(0.4, 0, 1, 1);
+  --tw-exit-scale: 0.98;
 }
 
 /* Grain texture overlay (Linear-style) */
@@ -243,9 +291,9 @@ body::after {
   inset: 0;
   pointer-events: none;
   z-index: 9999;
-  opacity: 0.035;
-  mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.06;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-repeat: repeat;
   background-size: 256px 256px;
 }
+

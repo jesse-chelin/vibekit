@@ -67,6 +67,8 @@ After the interview is complete and the user has approved the build plan, save t
   "categoryLabel": "[human-readable category]",
   "description": "[one-sentence app description]",
   "skills": ["list", "of", "selected", "skills"],
+  "vibe": "[friendly|professional|creative|bold|minimal|custom]",
+  "primaryColor": "[hex color]",
   "setupDate": "[ISO timestamp]",
   "interviewComplete": true
 }

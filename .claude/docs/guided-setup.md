@@ -214,12 +214,77 @@ Ask deployment questions:
 
 Always explain: "I'd recommend [X] because [reason]. It costs about [Y]/month."
 
-### Step 6: "Let's pick a look"
+### Step 6: "Let's pick a vibe"
 
-Confirm the app name if not already established during the conversation, then ask:
-- "Pick a main color" (offer: blue, green, purple, orange, red, teal)
+Confirm the app name if not already established during the conversation, then present vibe options:
 
-Apply branding to constants and CSS variables.
+```
+What vibe fits your app?
+
+1. Friendly (Default) — Warm teal + warm neutrals. Approachable, modern.
+2. Professional — Deep blue + cool grays. Corporate, trustworthy.
+3. Creative — Vibrant purple + warm tones. Expressive, playful.
+4. Bold — Hot coral/red + dark neutrals. Energetic, attention-grabbing.
+5. Minimal — Near-black primary + pure neutrals. Ultra-clean, content-first.
+6. Custom — Pick your own primary color.
+```
+
+Each vibe defines a complete palette: primary color, background warmth/coolness, border tones, chart colors, and sidebar tint. The user picks a vibe, not individual colors — this prevents clashing palettes.
+
+#### Vibe Palettes
+
+Each vibe sets ALL color tokens in `globals.css` (both `:root` and `.dark`). The key tokens that change per vibe:
+
+| Token | What changes |
+|-------|-------------|
+| `--primary` | Brand color (buttons, links, active states, ring) |
+| `--ring` | Same as primary |
+| `--sidebar-primary` | Same as primary |
+| `--sidebar-ring` | Same as primary |
+| `--background` | Warm (`#f8f7f6`) or cool (`#f7f7f8`) base |
+| `--foreground` | Warm (`#1c1b1a`) or cool (`#1b1b1f`) text |
+| `--border`, `--input` | Warm or cool gray tint |
+| `--muted`, `--secondary`, `--accent` | Warm or cool surface tints |
+| `--chart-1` through `--chart-5` | Harmonious set that works with the primary |
+
+**Reference palettes (hex values):**
+
+**Friendly (default — already in globals.css):**
+- Primary: `#2AB4A0` (teal)
+- Backgrounds: warm brown undertones
+- Charts: `#6C7AE0`, `#3DBDA7`, `#E0965C`, `#D4698A`, `#9B8AE0`
+
+**Professional:**
+- Primary: `#4A6CF7` (deep blue)
+- Backgrounds: cool gray undertones
+- Charts: `#4A6CF7`, `#38BDF8`, `#34D399`, `#FBBF24`, `#F472B6`
+
+**Creative:**
+- Primary: `#8B5CF6` (vibrant purple)
+- Backgrounds: warm with a hint of purple
+- Charts: `#8B5CF6`, `#EC4899`, `#F59E0B`, `#10B981`, `#3B82F6`
+
+**Bold:**
+- Primary: `#EF4444` (coral/red)
+- Backgrounds: dark warm neutrals
+- Charts: `#EF4444`, `#F97316`, `#FBBF24`, `#A855F7`, `#3B82F6`
+
+**Minimal:**
+- Primary: `#374151` (near-black)
+- Backgrounds: pure neutrals (no warm/cool tint)
+- Charts: `#374151`, `#6B7280`, `#9CA3AF`, `#D1D5DB`, `#4B5563`
+
+When the user selects a vibe, update ALL color tokens in both `:root` and `.dark` sections of `src/app/globals.css`. Do NOT just change `--primary` — update the full palette so backgrounds, borders, and surfaces harmonize with the primary color.
+
+If the user picks "Custom", ask for a hex color and generate a harmonious palette from it (warm neutrals if the color is warm, cool if cool).
+
+Save the chosen vibe to `.vibekit/intent.json`:
+```json
+{
+  "vibe": "friendly",
+  "primaryColor": "#2AB4A0"
+}
+```
 
 #### Checkpoint 4: Final confirmation
 

@@ -42,7 +42,6 @@ import {
   Send,
   Paperclip,
   ArrowRight,
-  ChevronsLeft,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -240,91 +239,67 @@ const CHART_COLORS = [
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
 
-function MockSidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
+function MockSidebar() {
   return (
-    <div
-      className="shrink-0 overflow-hidden border-r bg-sidebar"
-      style={{ width: collapsed ? 56 : 240 }}
-    >
-      <div className="flex h-full w-60 flex-col text-sidebar-foreground">
+    <div className="w-60 shrink-0 bg-sidebar">
+      <div className="flex h-full flex-col text-sidebar-foreground">
         {/* Header */}
-        <div className="flex h-14 shrink-0 items-center gap-2 border-b border-sidebar-border px-4">
-          <Tooltip open={collapsed ? undefined : false}>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                onClick={onToggle}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary"
-                aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-              >
-                <Zap className="h-4 w-4 text-primary-foreground" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right">Expand sidebar</TooltipContent>
-          </Tooltip>
-          <span className={`min-w-0 flex-1 truncate text-lg font-semibold tracking-tight ${collapsed ? "opacity-0" : "opacity-100"}`}>
+        <div className="flex h-14 shrink-0 items-center gap-2 px-4">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary">
+            <Zap className="h-4 w-4 text-primary-foreground" />
+          </div>
+          <span className="min-w-0 flex-1 truncate text-lg font-semibold tracking-tight">
             Vibekit
           </span>
-          <button
-            type="button"
-            onClick={onToggle}
-            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-sidebar-foreground/50 hover:bg-sidebar-accent hover:text-sidebar-foreground ${collapsed ? "pointer-events-none opacity-0" : "opacity-100"}`}
-          >
-            <ChevronsLeft className="h-4 w-4" />
-          </button>
         </div>
 
         {/* Navigation */}
         <nav className="flex-1 space-y-1 px-2 py-2">
-          <p className={`px-2 py-1.5 text-xs font-medium text-sidebar-foreground/50 ${collapsed ? "opacity-0" : "opacity-100"}`}>
+          <p className="px-2 py-1.5 text-xs font-medium text-sidebar-foreground/50">
             Navigation
           </p>
           {navItems.map((item) => (
-            <Tooltip key={item.label} open={collapsed ? undefined : false}>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  className={`flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors ${
-                    item.active
-                      ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                  }`}
+            <button
+              type="button"
+              key={item.label}
+              className={`flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors ${
+                item.active
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              }`}
+            >
+              <item.icon className="h-4 w-4 shrink-0" />
+              <span className="min-w-0 flex-1 truncate text-left">
+                {item.label}
+              </span>
+              {item.badge && (
+                <Badge
+                  variant="secondary"
+                  className="h-5 shrink-0 min-w-[20px] justify-center px-1.5 text-[10px]"
                 >
-                  <item.icon className="h-4 w-4 shrink-0" />
-                  <span className={`min-w-0 flex-1 truncate text-left ${collapsed ? "opacity-0" : "opacity-100"}`}>
-                    {item.label}
-                  </span>
-                  {item.badge && (
-                    <Badge
-                      variant="secondary"
-                      className={`h-5 shrink-0 min-w-[20px] justify-center px-1.5 text-[10px] ${collapsed ? "opacity-0" : "opacity-100"}`}
-                    >
-                      {item.badge}
-                    </Badge>
-                  )}
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="right">{item.label}</TooltipContent>
-            </Tooltip>
+                  {item.badge}
+                </Badge>
+              )}
+            </button>
           ))}
         </nav>
 
         {/* Footer */}
-        <div className="border-t border-sidebar-border px-2 py-3">
+        <div className="px-2 py-3">
           <DropdownMenu>
             <DropdownMenuTrigger className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 outline-none hover:bg-sidebar-accent">
               <Avatar className="h-7 w-7 shrink-0">
                 <AvatarFallback className="text-xs">BM</AvatarFallback>
               </Avatar>
-              <div className={`min-w-0 flex-1 text-left ${collapsed ? "opacity-0" : "opacity-100"}`}>
+              <div className="min-w-0 flex-1 text-left">
                 <p className="truncate text-sm font-medium">Bernard M.</p>
                 <p className="truncate text-xs text-sidebar-foreground/50">
                   bernard@example.com
                 </p>
               </div>
-              <ChevronDown className={`h-3.5 w-3.5 shrink-0 text-sidebar-foreground/50 ${collapsed ? "opacity-0" : "opacity-100"}`} />
+              <ChevronDown className="h-3.5 w-3.5 shrink-0 text-sidebar-foreground/50" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent side="top" align={collapsed ? "center" : "start"} className="w-56">
+            <DropdownMenuContent side="top" align="start" className="w-56">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem>
@@ -356,7 +331,7 @@ function MockSidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: ()
 
 function MockTopbar() {
   return (
-    <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
+    <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b px-4" style={{ backgroundColor: "var(--overlay-bg)", backdropFilter: "blur(16px) saturate(1.4)", WebkitBackdropFilter: "blur(16px) saturate(1.4)" }}>
       <nav className="flex items-center gap-1.5 text-sm">
         <span className="text-muted-foreground">Dashboard</span>
         <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
@@ -434,15 +409,14 @@ function MockTopbar() {
 export default function ShowcasePage() {
   const [switchChecked, setSwitchChecked] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-
   return (
     <TooltipProvider>
-      <div className="flex h-screen bg-background">
-        <MockSidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
-        <div className="flex flex-1 flex-col min-w-0">
+      <div className="flex h-screen bg-sidebar p-0">
+        <MockSidebar />
+        <div className="flex flex-1 flex-col min-w-0 m-2 ml-0 rounded-xl bg-background border border-border/50 overflow-hidden shadow-lg">
+          <div className="flex-1 overflow-y-auto">
           <MockTopbar />
-          <main className="flex-1 overflow-y-auto p-4 md:p-6">
+          <main className="p-4 md:p-6">
             <div className="space-y-6">
               {/* Page Header */}
               <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
@@ -1355,6 +1329,7 @@ export default function ShowcasePage() {
               </Card>
             </div>
           </main>
+          </div>
         </div>
       </div>
     </TooltipProvider>

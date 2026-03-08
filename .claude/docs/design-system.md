@@ -8,7 +8,9 @@ This single rule prevents the most common layout inconsistency in AI-generated a
 
 ## Color Tokens
 
-All colors use CSS custom properties via Tailwind. NEVER use raw hex, rgb, oklch, or opacity values.
+All colors use CSS custom properties via Tailwind. NEVER use raw hex, rgb, or opacity values.
+
+**Default palette:** Warm neutral tones with teal primary (`#2AB4A0`). The warmth comes from subtle brown/amber undertones in backgrounds and borders (not cool blue/gray). This is the vibekit default — during `/setup`, the user can choose a different vibe/palette.
 
 ### Backgrounds
 | Token | Usage |
@@ -17,7 +19,7 @@ All colors use CSS custom properties via Tailwind. NEVER use raw hex, rgb, oklch
 | `bg-card` | Cards, dialogs — elevated surface, visually distinct from background |
 | `bg-muted` | Subtle backgrounds, disabled states — lighter/cooler than secondary |
 | `bg-secondary` | Button backgrounds, subtle interactive surfaces — distinct from muted |
-| `bg-accent` | Hover/interactive highlights — has a subtle blue tint |
+| `bg-accent` | Hover/interactive highlights — warm tint |
 | `bg-popover` | Dropdowns, tooltips — highest elevation layer |
 | `bg-primary` | Primary action buttons |
 | `bg-destructive` | Danger buttons, error backgrounds |
@@ -25,17 +27,17 @@ All colors use CSS custom properties via Tailwind. NEVER use raw hex, rgb, oklch
 
 ### Surface Elevation (Dark Mode)
 
-Dark mode uses layered surfaces with subtle blue tinting for depth. Each level is visually distinct:
+Dark mode uses layered surfaces with warm brown tinting for depth. Each level is visually distinct:
 
 | Level | Token | Usage |
 |-------|-------|-------|
-| Base | `bg-background` | Page background — darkest |
+| Base | `bg-background` | Page background — darkest (`#201f1e`) |
 | Sidebar | `bg-sidebar` | Sidebar — slightly darker than base |
 | Surface | `bg-card` | Cards, panels — noticeably lighter than background |
 | Elevated | `bg-popover` | Popovers, dropdowns — lightest |
-| Interactive | `bg-accent` | Hover states, active items — most blue tint |
+| Interactive | `bg-accent` | Hover states, active items |
 
-This creates the layered depth visible in modern dark UIs (Linear, Neon). The increased chroma (blue tint) at higher levels makes surfaces feel alive rather than flat gray.
+This creates layered depth visible in modern dark UIs. The warm undertones make surfaces feel organic rather than cold gray.
 
 ### Colored Icon Containers
 
@@ -71,7 +73,11 @@ Use the `iconColor` prop on `StatCard` to set these automatically.
 |-------|-------|
 | `--overlay-bg` | Frosted-glass background for all floating surfaces (dialogs, sheets, dropdowns, popovers, tooltips, chart tooltips). Applied via inline `style={{ backgroundColor: "var(--overlay-bg)", backdropFilter: "blur(16px) saturate(1.4)", WebkitBackdropFilter: "blur(16px) saturate(1.4)" }}` |
 
-This replaces the old solid `bg-popover` on floating surfaces. All overlay components (Dialog, Sheet, DropdownMenu, Popover, Select, ChartTooltipContent) already have this applied — do NOT override it with `bg-*` classes.
+This replaces the old solid `bg-popover` on floating surfaces. All overlay components (Dialog, Sheet, DropdownMenu, Popover, Select, ChartTooltipContent) and the **sticky topbar** already have this applied — do NOT override it with `bg-*` classes.
+
+### Sticky Topbar
+
+The app topbar (`AppTopbar`) is `sticky top-0 z-30` with the frosted-glass overlay style. It stays visible on scroll and blurs content beneath it.
 
 ### Status Colors
 | State | Background | Text |
@@ -252,14 +258,7 @@ Elevation comes primarily from surface color differences, not shadows. A full sh
 
 ### Border Radius
 
-Base radius: `--radius: 0.75rem` (12px). Derived values:
-
-| Token | Value | Usage |
-|-------|-------|-------|
-| `rounded-sm` | `calc(0.75rem - 4px)` = 8px | Small elements (badges, inline tags) |
-| `rounded-md` | `calc(0.75rem - 2px)` = 10px | Buttons, inputs, icon containers |
-| `rounded-lg` | `0.75rem` = 12px | Cards, dialogs, sheets |
-| `rounded-xl` | `calc(0.75rem + 4px)` = 16px | Large containers, hero sections |
+Base radius: `--radius: 8px`. All radius tokens (`rounded-sm`, `rounded-md`, `rounded-lg`, `rounded-xl`) resolve to the same `8px` value for a uniform, consistent look across all elements.
 
 ## Interactive Glow Effect
 
@@ -288,10 +287,35 @@ Two CSS utility classes for interactive feedback:
 
 | Class | Effect | Use On |
 |-------|--------|--------|
-| `hover-lift` | `translateY(-1px)` + `shadow-sm` on hover | Feature cards, stat cards, interactive list items |
+| `hover-lift` | Subtle `border-color` transition on hover | Feature cards, stat cards, interactive list items |
 | `press-down` | `scale(0.98)` on active | Buttons, clickable cards |
 
 These are CSS transitions (not keyframe animations), so they stay within the "no custom animations" constraint.
+
+### Cursor
+
+All interactive elements (buttons, checkboxes, radio buttons, switches, select triggers, tabs, dropdown items, command items) use `cursor-pointer`. Disabled elements use `cursor-not-allowed`. This is already applied to all UI primitives.
+
+### Auto-Hiding Scrollbars
+
+Scrollbars are invisible by default and appear on hover (using `scrollbar-width: thin` and custom `::-webkit-scrollbar` styles). This keeps the UI clean and reduces visual clutter. The scrollbar thumb uses `var(--border)` color.
+
+### Micro-Animations
+
+Floating surfaces (popovers, dropdowns) use subtle scale micro-animations via CSS custom properties:
+- **Open:** 120ms, `cubic-bezier(0.16, 1, 0.3, 1)`, scale from 0.98
+- **Close:** 80ms, `cubic-bezier(0.4, 0, 1, 1)`, scale to 0.98
+- **Slide distance:** `slide-in-from-*-1` (4px), not `slide-in-from-*-2`
+
+Sheet animations use a "gravity-feel" curve:
+- **Open:** 400ms, `cubic-bezier(0.16, 1, 0.3, 1)` — fast start, soft landing
+- **Close:** 200ms, `cubic-bezier(0.5, 0, 1, 1)` — accelerates away
+
+These are defined in `globals.css` via `data-slot` selectors. Do NOT override animation timing on individual components.
+
+### Grain Texture
+
+A subtle SVG noise grain overlay (`body::after`) adds texture at `opacity: 0.06`. This is a global effect — do not remove or duplicate it.
 
 ## Content Overflow
 

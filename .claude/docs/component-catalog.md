@@ -27,7 +27,7 @@ These are the ~30 curated components. Do NOT add new ones without explicit user 
 | Scroll Area | `@/components/ui/scroll-area` | Custom scrollbars for overflow areas |
 | Select | `@/components/ui/select` | Dropdown selection. Use for 3+ options |
 | Separator | `@/components/ui/separator` | Visual dividers between sections |
-| Sheet | `@/components/ui/sheet` | Side panels, mobile navigation |
+| Sheet | `@/components/ui/sheet` | Side panels, mobile navigation. `sm:max-w-lg` on left/right sides |
 | Sidebar | `@/components/ui/sidebar` | App navigation sidebar |
 | Skeleton | `@/components/ui/skeleton` | Loading placeholders in loading.tsx |
 | Switch | `@/components/ui/switch` | Toggle settings on/off |
@@ -253,3 +253,5 @@ import { NotificationCenter } from "@/components/patterns/notification-center";
 7. **Writing custom form error `<p>` tags** instead of using `FieldError` component — it handles null children, has `role="alert"` for a11y, and uses `text-destructive` consistently
 8. **Using `text-white` or raw colors** on badges/indicators — use `text-destructive-foreground`, `text-primary-foreground`, etc.
 9. **Building custom chart wrappers** instead of using `ChartCard` + `ChartContainer` — they provide consistent styling and frosted-glass tooltips
+10. **Using `cursor-default`** on interactive elements — all buttons, checkboxes, selects, tabs, dropdown items use `cursor-pointer` (already applied to all UI primitives)
+11. **Overriding animation timing** on Sheet, Popover, or DropdownMenu — animation curves are defined globally in `globals.css` via `data-slot` selectors. Do not add inline `duration-*` classes
