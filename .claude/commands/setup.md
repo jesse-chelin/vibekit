@@ -85,7 +85,7 @@ Follow `guided-setup.md` Step 7 exactly:
 
 ### Documentation
 
-Generate APP.md, ROADMAP.md, CHANGELOG.md as described in `guided-setup.md` Steps 7i-7k.
+Generate the documentation vault (`docs/`) and APP.md as described in `guided-setup.md` Step 7h.
 
 ### Git + Summary
 

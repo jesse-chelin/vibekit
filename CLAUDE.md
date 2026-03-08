@@ -18,9 +18,15 @@ The measure of quality is not "does the demo look good?" — it's "would you tru
 Every time you open this project, do this first:
 
 1. **Read `APP.md`** in the project root — it describes what this app is, its models, routes, pages, and current state. If `APP.md` doesn't exist, this is a fresh vibekit project — follow the First Run flow below.
-2. **Read `ROADMAP.md`** if it exists — it shows planned features and what's in progress.
-3. **Read `CHANGELOG.md`** if it exists — it shows what was recently built.
-4. Now you have full context. Help the user with whatever they need.
+2. **Read `docs/roadmap.md`** if it exists — it shows planned features and what's in progress.
+3. **Read `docs/changelog.md`** if it exists — it shows what was recently built.
+4. **If you need deeper context** — browse `docs/` (the Obsidian vault):
+   - `docs/_index.md` — navigation map to all documentation
+   - `docs/product/prd.md` — product requirements and goals
+   - `docs/engineering/data-model.md` — full schema documentation
+   - `docs/engineering/api-reference.md` — all API procedures
+   - `docs/features/` — individual feature specifications
+5. Now you have full context. Help the user with whatever they need.
 
 ## First Run
 
@@ -66,7 +72,7 @@ chore: upgrade dependencies
 3. Run `pnpm build` to verify
 4. Commit with a conventional commit message
 5. Push and create a PR: `gh pr create`
-6. After merge, update `APP.md`, `ROADMAP.md`, and `CHANGELOG.md`
+6. After merge, update `APP.md` and vault docs (`docs/roadmap.md`, `docs/changelog.md`, feature specs)
 
 ### PR Descriptions
 Always include:
@@ -109,69 +115,37 @@ Structure:
 [Architectural choices and why they were made]
 ```
 
-### ROADMAP.md (generate after first build, maintain ongoing)
+### Documentation Vault (`docs/`)
 
-The roadmap tracks what's planned, what's in progress, and what's done.
+The `docs/` directory is an Obsidian vault with structured project documentation. Generated during `/setup` with real content from the interview and build. Maintained during ongoing development.
 
-Structure:
-```markdown
-# Roadmap
-
-## Current Sprint
-- [ ] Feature name — brief description
-- [x] Completed feature — brief description
-
-## Up Next
-- [ ] Feature name — brief description
-- [ ] Feature name — brief description
-
-## Future Ideas
-- Feature name — brief description
-
-## Completed
-- [x] Feature — when completed, brief summary
-```
-
-When working on a roadmap item:
-1. Move it to "Current Sprint" and check the box when done
-2. Create a feature branch for it
-3. After completing, update APP.md and CHANGELOG.md
-4. Move to "Completed" with date
-
-### CHANGELOG.md (append after every feature)
-
-```markdown
-# Changelog
-
-## [Unreleased]
-
-### Added
-- New feature description
-
-### Changed
-- What was modified
-
-### Fixed
-- Bug that was fixed
-
-## [YYYY-MM-DD] - Brief release name
-
-### Added
-- ...
-```
+| Directory | Contains | Updated When |
+|-----------|----------|-------------|
+| `docs/product/` | PRD, user persona, competitors, user flows | When product direction changes |
+| `docs/decisions/` | Architecture Decision Records (ADRs) | When significant technical decisions are made |
+| `docs/engineering/` | Architecture, data model, API reference, deployment | When schema, routers, or infrastructure changes |
+| `docs/features/` | One spec per feature | When features are added or modified |
+| `docs/roadmap.md` | Feature roadmap | When roadmap items change status |
+| `docs/changelog.md` | Change history | After every feature or fix |
 
 ### When to Update Docs
 
 | Event | Update |
 |-------|--------|
-| Feature added | APP.md (routes, models, API) + CHANGELOG.md + ROADMAP.md |
-| Model changed | APP.md (Data Models section) |
-| Route added/removed | APP.md (Routes & Pages section) |
-| Skill installed | APP.md (Installed Skills, Env Vars) |
-| Bug fixed | CHANGELOG.md |
-| Roadmap item completed | ROADMAP.md + CHANGELOG.md |
-| Env var added | APP.md (Environment Variables) |
-| Architectural decision | APP.md (Key Decisions) |
+| Feature added | APP.md + `docs/features/{name}.md` + `docs/engineering/api-reference.md` + `docs/engineering/data-model.md` + `docs/changelog.md` + `docs/roadmap.md` + `docs/_index.md` |
+| Model changed | APP.md (Data Models) + `docs/engineering/data-model.md` |
+| Route added/removed | APP.md (Routes & Pages) + `docs/engineering/api-reference.md` |
+| Skill installed | APP.md (Installed Skills, Env Vars) + `docs/engineering/architecture.md` |
+| Bug fixed | `docs/changelog.md` |
+| Roadmap item completed | `docs/roadmap.md` + `docs/changelog.md` |
+| Env var added | APP.md (Environment Variables) + `docs/engineering/deployment.md` |
+| Architectural decision | `docs/decisions/NNN-{name}.md` (new ADR) |
+
+When working on a roadmap item:
+1. Move it to "Current Sprint" and check the box when done
+2. Create a feature branch for it
+3. After completing, update APP.md and vault docs
+4. Move to "Completed" with date
 
 ## Architecture
 
@@ -419,5 +393,5 @@ Available via `/command-name`:
 - `/perf-check [path]` — Performance audit
 - `/add-page [name]` — Create a new page with all required files
 - `/add-feature [description]` — Plan and build a new feature from the roadmap
-- `/update-docs` — Update APP.md, ROADMAP.md, and CHANGELOG.md after changes
+- `/update-docs` — Update APP.md and docs/ vault after changes
 - `/roadmap` — View, plan, and manage the feature roadmap

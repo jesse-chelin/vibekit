@@ -358,32 +358,206 @@ pnpm build
 
 **Verify**: Build passes with zero errors. If it fails, fix and re-run. Do NOT skip the build check.
 
-#### 7h. Deployment (if applicable)
-If a deploy skill was installed, walk through setup step by step. Each deployment skill's SKILL.md has its own guided setup.
+#### 7h. Generate Documentation Vault
 
-### Post-Build Documentation (MANDATORY)
+Create the `docs/` Obsidian vault with real content from the interview and build. This is the project's structured knowledge base — PRDs, decision records, engineering docs, and feature specs.
 
-After the build passes, generate these files:
+##### 7h-1. Create `.obsidian/` config
 
-#### 7i. Generate `APP.md`
-Follow the structure in CLAUDE.md's "Living Documentation" section. Include:
-- App name and one-paragraph description
-- Tech Stack (Next.js, installed skills, deployment)
-- Data Models (every Prisma model with key fields)
-- Routes & Pages (every route, what it shows)
-- API / tRPC Routers (every procedure)
-- Installed Skills
-- Environment Variables (from .env.example, never include values)
-- Key Decisions
+Create these files for a ready-to-open Obsidian vault:
 
-#### 7j. Generate `ROADMAP.md`
-Follow the structure in CLAUDE.md's "Roadmap" section:
+**`docs/.obsidian/app.json`:**
+```json
+{
+  "showLineCount": true,
+  "strictLineBreaks": true,
+  "showFrontmatter": false,
+  "livePreview": true,
+  "defaultViewMode": "preview",
+  "readableLineLength": true,
+  "showInlineTitle": true,
+  "tabSize": 2,
+  "attachmentFolderPath": "assets",
+  "newFileLocation": "folder",
+  "newFileFolderPath": "features"
+}
+```
+
+**`docs/.obsidian/appearance.json`:**
+```json
+{
+  "baseFontSize": 16,
+  "interfaceFontSize": 14,
+  "cssTheme": "",
+  "theme": "obsidian"
+}
+```
+
+**`docs/.obsidian/core-plugins.json`:**
+```json
+{
+  "file-explorer": true,
+  "global-search": true,
+  "graph-view": true,
+  "backlink": true,
+  "outgoing-link": true,
+  "tag-pane": true,
+  "page-preview": true,
+  "command-palette": true,
+  "editor-status": true,
+  "starred": true,
+  "outline": true,
+  "templates": false,
+  "daily-notes": false,
+  "word-count": true,
+  "file-recovery": true,
+  "workspaces": false,
+  "note-composer": false,
+  "audio-recorder": false,
+  "canvas": false,
+  "publish": false,
+  "sync": false,
+  "slides": false,
+  "switcher": true,
+  "properties": true
+}
+```
+
+**`docs/.obsidian/graph.json`:**
+```json
+{
+  "collapse-filter": false,
+  "search": "",
+  "showTags": true,
+  "showAttachments": false,
+  "hideUnresolved": false,
+  "showOrphans": true,
+  "collapse-color-groups": false,
+  "colorGroups": [
+    { "query": "path:product", "color": { "a": 1, "rgb": 5765887 } },
+    { "query": "path:decisions", "color": { "a": 1, "rgb": 16744448 } },
+    { "query": "path:engineering", "color": { "a": 1, "rgb": 65408 } },
+    { "query": "path:features", "color": { "a": 1, "rgb": 16711935 } }
+  ],
+  "collapse-display": false,
+  "lineSizeMultiplier": 1,
+  "nodeSizeMultiplier": 1
+}
+```
+
+Do NOT create `workspace.json` — Obsidian generates it on first open.
+
+##### 7h-2. Copy template files
+
+Copy the two templates that ship with vibekit:
+- `docs/decisions/_template.md` — already exists
+- `docs/features/_template.md` — already exists
+
+##### 7h-3. Generate vault documents
+
+Read `.vibekit/intent.json` for interview data. Read `prisma/schema.prisma` for the data model. Read `src/trpc/routers/*.ts` for the API surface. Generate these documents with REAL content — not templates, not placeholders.
+
+Every document must have YAML frontmatter with `type`, `status`, and `created` fields.
+Use `[[wiki-links]]` for cross-references between docs (shortest unambiguous name).
+
+**`docs/_index.md`** — Vault home and navigation map:
+- App name and one-line description (from `intent.json.description`)
+- Quick Links organized by category (wiki-links to every doc)
+- "For AI Agents" section: "Start here. Read `[[prd]]` for product context. Read `[[data-model]]` and `[[api-reference]]` for technical context. Check `[[roadmap]]` for what's planned."
+- Vault conventions: frontmatter schema, how to add new docs
+
+**`docs/product/prd.md`** — Product Requirements Document:
+- Overview (expand `intent.json.description` into a paragraph)
+- Problem Statement (`intent.json.problem`)
+- Target User (`intent.json.targetUser`, link to `[[target-user]]`)
+- Unique Value Proposition (`intent.json.uniqueAngle`)
+- MVP Features (`intent.json.mvpFeatures`) — for each: name, one-paragraph description, acceptance criteria. Link to `[[feature-name]]` docs
+- Deferred Features (`intent.json.v2Features`) — name, brief description, why deferred
+- Non-Goals — what this app explicitly does NOT do
+- Constraints — tech constraints (SQLite dev, skills limitations)
+
+**`docs/product/target-user.md`** — User Persona:
+- Who they are (expand `intent.json.targetUser`)
+- What frustrates them (from `intent.json.problem`)
+- What they currently use (`intent.json.competitors`)
+- What success looks like
+- 2-3 day-in-the-life scenarios
+
+**`docs/product/competitive-landscape.md`** — Competitor Analysis:
+- Market overview
+- Competitors table (`intent.json.competitors`): name, strengths, weaknesses, pricing
+- Differentiation (`intent.json.uniqueAngle`)
+- Opportunities — gaps competitors don't fill
+
+**`docs/product/user-flows.md`** — Critical User Journeys:
+- Critical Path: `Sign up → Onboarding → [First key action] → [Value delivered]`
+- Per-feature flows: trigger, steps, outcome (link to `[[feature-name]]`)
+
+**`docs/decisions/001-tech-stack.md`** — Tech Stack Decision (ADR):
+- Context: building a `category` app called `appName`
+- Decision: vibekit stack (Next.js, Prisma, tRPC, Auth.js, Tailwind, shadcn/ui)
+- Skills installed from `intent.json.skills` with rationale
+- Consequences: positives and trade-offs
+
+**`docs/decisions/002-data-model.md`** — Data Model Decision (ADR):
+- Context: what entities the app needs (from interview)
+- Decision: the chosen schema with models and relationships (read `prisma/schema.prisma`)
+- Alternatives considered (if discussed during interview)
+- Consequences: trade-offs of the schema design
+
+**`docs/decisions/003-mvp-scope.md`** — MVP Scope Decision (ADR):
+- Context: user described N features, scoped to MVP
+- Decision: what's in v1 (`mvpFeatures`) vs deferred (`v2Features`)
+- For each deferred feature, why it was deferred
+- Criteria for promotion: when should a v2 feature get built?
+
+**`docs/engineering/architecture.md`** — Architecture Reference:
+- Stack overview with links to `[[001-tech-stack]]`
+- Directory structure
+- Data flow: browser → Next.js → tRPC → Prisma → SQLite
+- Authentication flow
+- Route groups: `(marketing)`, `(auth)`, `(app)` with what each contains for THIS app
+- Skills system overview
+
+**`docs/engineering/data-model.md`** — Data Model Reference:
+- Entity relationship summary (ASCII or mermaid diagram)
+- For each Prisma model (read `prisma/schema.prisma`):
+  - Name, purpose
+  - Fields table: name, type, constraints, description
+  - Relationships
+- Data scoping strategy (userId, etc.)
+
+**`docs/engineering/api-reference.md`** — API Reference:
+- Overview: tRPC-based, all `protectedProcedure`
+- For each router (read `src/trpc/routers/*.ts`):
+  - Router name
+  - Procedures table: name, type (query/mutation), input schema, return type, description
+- Common patterns: pagination shape, error handling, auth context
+
+**`docs/engineering/deployment.md`** — Deployment Reference:
+- Prerequisites
+- Environment variables (from `.env.example`, never include values)
+- Deployment steps (if a deploy skill is installed, include its instructions)
+- Database migration strategy
+
+**`docs/features/{feature-name}.md`** — One per MVP feature:
+- Frontmatter: `type: feature`, `status: shipped`, `feature`, `version: v1`, `related-models`, `related-routes`
+- Overview
+- User Story: "As a [targetUser], I want to [action] so that [benefit]"
+- Data Model: which models, link to `[[data-model]]`
+- Pages: routes and descriptions
+- API: which tRPC procedures
+- States: empty, loading, error descriptions
+- Acceptance Criteria checklist
+- Future Enhancements from `v2Features` if related
+
+**`docs/roadmap.md`** — Feature Roadmap:
 - Current Sprint (empty — app just launched)
-- Up Next (suggest 3-5 natural next features based on the app type)
-- Future Ideas (suggest 3-5 longer-term ideas)
-- Completed: "Initial build — [today's date]"
+- Up Next (3-5 features from `intent.json.v2Features`)
+- Future Ideas (3-5 longer-term ideas based on app type)
+- Completed: "Initial build — [today's date]" with summary
 
-#### 7k. Generate `CHANGELOG.md`
+**`docs/changelog.md`** — Change History:
 ```markdown
 # Changelog
 
@@ -395,7 +569,44 @@ Follow the structure in CLAUDE.md's "Roadmap" section:
 - [List every feature built in the initial setup]
 ```
 
-#### 7l. Initialize git and make the first commit
+##### 7h-4. Generate `APP.md`
+
+Generate `APP.md` in the project root as a concise quick-reference. Follow the structure in CLAUDE.md's "Living Documentation" section:
+- App name and one-paragraph description
+- Tech Stack
+- Data Models (every Prisma model with key fields — summary, not full detail)
+- Routes & Pages
+- API / tRPC Routers (every procedure)
+- Installed Skills
+- Environment Variables (from .env.example, never include values)
+- Key Decisions
+
+Add a **Documentation** section at the end:
+```markdown
+## Documentation
+
+Full project documentation is in the `docs/` Obsidian vault. Open it in Obsidian or browse the markdown files directly.
+
+- [Product Requirements](docs/product/prd.md)
+- [Architecture](docs/engineering/architecture.md)
+- [Data Model](docs/engineering/data-model.md)
+- [API Reference](docs/engineering/api-reference.md)
+- [Roadmap](docs/roadmap.md)
+- [Changelog](docs/changelog.md)
+```
+
+##### 7h-5. Verify vault
+
+- Every `.md` file in `docs/` has valid YAML frontmatter with `type`, `status`, `created`
+- All `[[wiki-links]]` resolve to existing files in the vault
+- `_index.md` links to every other document
+- No TODO, FIXME, or placeholder text — every section has real content
+- Feature docs reference correct models and routes from the actual build
+
+#### 7i. Deployment (if applicable)
+If a deploy skill was installed, walk through setup step by step. Each deployment skill's SKILL.md has its own guided setup.
+
+#### 7j. Initialize git and make the first commit
 ```bash
 git init
 git add .
@@ -465,11 +676,12 @@ What I built:
 
 What's next:
 - Run `pnpm dev` to start the app
-- Check ROADMAP.md for planned features
+- Check `docs/roadmap.md` for planned features
 - Use `/add-feature` to build the next feature
 - Use `/roadmap` to manage your feature backlog
+- Open `docs/` in Obsidian for full project documentation
 
-Everything is documented in APP.md, and I'll keep it updated as we build.
+Everything is documented in APP.md (quick reference) and the docs/ vault (deep reference). I'll keep both updated as we build.
 ```
 
 ---

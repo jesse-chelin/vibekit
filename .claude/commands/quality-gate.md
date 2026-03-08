@@ -73,8 +73,11 @@ For EVERY mutation (create, update, delete) in `src/trpc/routers/`:
 - [ ] `APP.md` data models match `prisma/schema.prisma`
 - [ ] `APP.md` routes match `src/app/` directory structure
 - [ ] `APP.md` API procedures match `src/trpc/routers/`
-- [ ] `ROADMAP.md` exists with current sprint status
-- [ ] `CHANGELOG.md` exists with recent changes
+- [ ] `docs/roadmap.md` exists with current sprint status
+- [ ] `docs/changelog.md` exists with recent changes
+- [ ] `docs/_index.md` exists and links to all vault docs
+- [ ] `docs/engineering/data-model.md` matches `prisma/schema.prisma`
+- [ ] `docs/engineering/api-reference.md` matches `src/trpc/routers/`
 
 ## Phase 6: Performance Sanity
 

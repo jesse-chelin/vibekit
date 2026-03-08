@@ -168,6 +168,22 @@ Introduce hard limits based on complexity:
 - **Max 3 skills in v1.** Each skill adds configuration overhead. "You selected 5 skills. Let's start with the 3 essential ones and add the others after launch."
 - **Features require justification.** Instead of "Do you want charts?", ask "What decision would charts help your users make? If you can't answer that, skip charts for now."
 
+### 2.5 Documentation Vault Generation
+
+Auto-generate a structured Obsidian vault at `docs/` during `/setup` with real content from the interview and build:
+
+- **Product docs** (`docs/product/`): PRD, user persona, competitive landscape, user flows — all populated from intent.json interview data
+- **Decision records** (`docs/decisions/`): ADRs for tech stack, data model, and MVP scope — auto-generated with real rationale
+- **Engineering docs** (`docs/engineering/`): Architecture, data model (reads schema.prisma), API reference (reads routers/), deployment
+- **Feature specs** (`docs/features/`): One spec per MVP feature with user stories, data model refs, pages, API procedures, states, acceptance criteria
+- **Roadmap + changelog** (`docs/roadmap.md`, `docs/changelog.md`): Moved from root into the vault
+
+The vault includes `.obsidian/` config (graph view with color-coded clusters, core plugins enabled) — ready to open in Obsidian immediately.
+
+Content depth scales with interview data: current intent.json produces basic docs; Phase 2.1's expanded interview produces rich PRDs and competitive analysis.
+
+Templates ship with vibekit (`docs/decisions/_template.md`, `docs/features/_template.md`) for ongoing documentation. `/add-feature` auto-creates feature specs. `/update-docs` syncs the vault with code changes.
+
 ---
 
 ## Phase 3: Dynamic Generation
@@ -330,6 +346,7 @@ Track token/time usage during builds:
 | **P1** | 2.1 Idea validation phase | Product quality, not just code quality | Medium |
 | **P1** | 2.2 Structured intent + build plan approval | Captures validation context, presents plan before generating | Small |
 | **P1** | 2.4 Scope gating | Prevents v1 bloat | Small |
+| **P1** | 2.5 Documentation vault generation | Structured Obsidian vault with PRDs, ADRs, feature specs | Medium |
 | **P1** | 3.1 Dynamic landing page | No more copy-paste templates | Medium |
 | **P1** | 3.3 Dynamic seed data | First experience feels real | Small |
 | **P2** | 2.3 Market research during interview | Informed decisions | Medium |

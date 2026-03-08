@@ -9,8 +9,8 @@ Build a new feature following vibekit's stepped development workflow. Each phase
 Read these files to understand the current state of the app:
 
 1. **Read `APP.md`** — models, routes, pages, API, installed skills
-2. **Read `ROADMAP.md`** — find the feature, understand priority and context
-3. **Read `CHANGELOG.md`** — recent changes that might affect this feature
+2. **Read `docs/roadmap.md`** — find the feature, understand priority and context
+3. **Read `docs/changelog.md`** — recent changes that might affect this feature
 4. **Check `prisma/schema.prisma`** — existing data models
 5. **Check `src/trpc/routers/`** — existing API surface
 
@@ -184,9 +184,31 @@ If any scenario fails, go back to Phase 3 and fix it. Do not document a broken f
 
 ## Phase 5: Document (update everything)
 
-1. **Update APP.md** — Add new models, routes, API procedures
-2. **Update ROADMAP.md** — Mark the feature as completed with today's date, move to "Completed" section
-3. **Update CHANGELOG.md** — Add to "Unreleased" section under "Added"/"Changed"/"Fixed"
+### 5a. Update APP.md
+Add new models, routes, API procedures to the quick-reference.
+
+### 5b. Create Feature Doc
+Create `docs/features/{feature-name}.md` using the template in `docs/features/_template.md`:
+- Set frontmatter: `type: feature`, `status: shipped`, `feature: "{name}"`, `version`, `related-models`, `related-routes`, `created`, `last-updated`
+- Fill in: Overview, User Story, Data Model (link to `[[data-model]]`), Pages, API procedures, States (empty/loading/error), Acceptance Criteria
+
+### 5c. Update Vault Engineering Docs
+- **If new models added:** Re-read `prisma/schema.prisma` and update `docs/engineering/data-model.md`
+- **If new routers/procedures added:** Re-read `src/trpc/routers/` and update `docs/engineering/api-reference.md`
+
+### 5d. Update Vault Navigation and History
+- Update `docs/_index.md` — add new feature doc to Quick Links → Features
+- Update `docs/roadmap.md` — mark feature as completed with today's date
+- Update `docs/changelog.md` — add to "Unreleased" under "Added"/"Changed"/"Fixed"
+
+### 5e. Decision Record (if applicable)
+Create a new `docs/decisions/NNN-{name}.md` using the template if ANY of these are true:
+- A new skill was installed
+- The data model was significantly restructured
+- A new pattern was introduced that future features should follow
+- An alternative approach was explicitly considered and rejected
+
+Otherwise, skip the decision record.
 
 ## Phase 6: Ship
 
@@ -216,8 +238,10 @@ What I built:
 
 What I updated:
 - APP.md — [what sections changed]
-- ROADMAP.md — marked as completed
-- CHANGELOG.md — added under "Added"
+- docs/features/[name].md — new feature spec
+- docs/roadmap.md — marked as completed
+- docs/changelog.md — added under "Added"
+- docs/engineering/ — [data-model and/or api-reference if changed]
 
 Branch: feat/feature-name
 [PR link if created]

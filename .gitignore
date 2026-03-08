@@ -51,3 +51,10 @@ prisma/dev.db
 prisma/dev.db-journal
 .vibekit/backup/
 .vibekit/intent.json
+
+# Obsidian (user-specific, not project config)
+docs/.obsidian/workspace.json
+docs/.obsidian/workspace-mobile.json
+docs/.obsidian/plugins/
+docs/.obsidian/themes/
+docs/.obsidian/hotkeys.json
