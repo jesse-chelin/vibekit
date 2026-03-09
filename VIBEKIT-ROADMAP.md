@@ -343,9 +343,10 @@ Track token/time usage during builds:
 | **P0** | ~~1.1 Wire template pages to API~~ | ~~Fixes the core credibility gap~~ | ✅ Done (2026-03-06) |
 | **P0** | ~~1.2 Generate wired pages during build~~ | ~~Every `/setup` produces working apps~~ | ✅ Done (2026-03-06) |
 | **P0** | ~~1.3 Form integration pattern~~ | ~~Forms actually work~~ | ✅ Done (2026-03-06) |
-| **P1** | 2.1 Idea validation phase | Product quality, not just code quality | Medium |
-| **P1** | 2.2 Structured intent + build plan approval | Captures validation context, presents plan before generating | Small |
-| **P1** | 2.4 Scope gating | Prevents v1 bloat | Small |
+| **P1** | ~~2.1 Idea validation phase~~ | ~~Product quality, not just code quality~~ | ✅ Done (2026-03-08) |
+| **P1** | ~~2.2 Structured intent + build plan approval~~ | ~~Captures validation context, presents plan before generating~~ | ✅ Done (2026-03-08) |
+| **P1** | ~~2.4 Scope gating~~ | ~~Prevents v1 bloat~~ | ✅ Done (2026-03-08) |
+| **P1** | ~~Code generators (script-based scaffolding)~~ | ~~80% of build produced by generators, not LLM~~ | ✅ Done (2026-03-09) |
 | **P1** | 2.5 Documentation vault generation | Structured Obsidian vault with PRDs, ADRs, feature specs | Medium |
 | **P1** | 3.1 Dynamic landing page | No more copy-paste templates | Medium |
 | **P1** | 3.3 Dynamic seed data | First experience feels real | Small |
@@ -420,6 +421,63 @@ The competition is building faster hammers. Vibekit should be the advisor that m
 - `guided-setup.md` Step 7d: Page Type Wiring Guide table (dashboard/list/detail/create/edit), schema sync rule, invalidation rule, list data contract, `_components/` convention
 - `CLAUDE.md`: Fixed `useTRPC` → `trpc`, added `user.stats` invalidation to mutation template, 3 new Hard Constraints (no hardcoded data, no raw arrays, force-dynamic required)
 - `performance-guide.md`: Fixed stale `useTRPC` references
+
+### 2026-03-08 — Phase 2: Smarter Interview (2.1, 2.2, 2.4)
+
+**2.1 Idea Validation** — New Step 2 in guided-setup.md. Conversational validation with four blocks:
+- Block A: Target User — challenges vague answers, captures `targetUser`
+- Block B: Problem — challenges weak problems, captures `problem`
+- Block C: Competitors — Claude shares known alternatives, captures `competitors[]`
+- Block D: Unique Angle — challenges weak differentiators, captures `uniqueAngle`
+- Tone guidance: supportive product advisor, "we" language, 2-3 questions per exchange
+- Escape hatch: "just build it" → infer defaults gracefully
+
+**2.2 Structured Intent + Build Plan Approval** — New Step 9 in guided-setup.md:
+- Expanded intent.json with: `targetUser`, `problem`, `competitors`, `uniqueAngle`, `mvpFeatures`, `v2Features`, `needsLandingPage`, `needsPayments`, `models`, `pages`, `buildApproved`
+- Full build manifest presented before any code generation (models, routers, pages, skills, deferred features)
+- Hard constraint in CLAUDE.md: no code generation until user approves the plan
+- Quick Start path gets abbreviated build plan with inferred values
+- All new fields consumed by Step 10h (docs vault generation)
+
+**2.4 Scope Gating** — New Step 3 in guided-setup.md:
+- Feature triage: compile all mentioned features, propose v1/v2 split
+- Hard limits: 5 MVP features, 7 pages (feature areas), 3 skills, 5 user-facing models
+- Page bundling: CRUD for one entity = 1 feature area
+- Skill justification required for charts, payments, admin panel, i18n, AI features
+- Challenge scripts for each dimension when limits are exceeded
+- Quick Start applies scope gating silently
+
+**Interview flow renumbered:** Steps 0→1→2(validate)→3(scope)→4→5→6→7→8→9(approve)→10(build)
+
+### 2026-03-09 — Code Generators (Script-Based Scaffolding)
+
+**Problem:** Step 10 (Build) had the LLM writing every line of code — Prisma models, tRPC routers, pages, skeletons, sidebar, seed data. ~80% was formulaic. The LLM spent thousands of tokens reproducing patterns it already knew, with occasional bugs (missing `export const dynamic`, wrong pagination shape, missing children props).
+
+**Solution:** TypeScript generator scripts in `generators/` that consume a structured JSON build spec and produce all standard files in seconds. The LLM now only writes `build-spec.json` (~100 lines of JSON config) and handles the 20% customization.
+
+**Files created (11 files, ~1,650 lines):**
+- `generators/types.ts` — BuildSpec interface hierarchy
+- `generators/utils.ts` — Case conversion, file I/O, Zod/Prisma type mapping, enum color maps
+- `generators/compose.ts` — CLI orchestrator: `npx tsx generators/compose.ts [path]`
+- `generators/prisma-model.ts` — Appends models to schema.prisma, updates User relations
+- `generators/trpc-router.ts` — 5-procedure routers, router registration, user.ts stats
+- `generators/list-page.ts` — Server page + client component (DataTable, EmptyState, delete) + loading
+- `generators/detail-page.ts` — Detail page (sidebar, content) + loading + delete button component
+- `generators/form-page.ts` — Create + edit pages + loading skeletons
+- `generators/dashboard.ts` — Stat cards + recent entity card + loading
+- `generators/sidebar.ts` — Rewrites app-sidebar.tsx with nav items from spec
+- `generators/seed.ts` — Topologically sorted seed data with realistic field values
+
+**Key properties:**
+- Idempotent: safe to re-run (cleans previous output before regenerating)
+- Handles nullable fields correctly (TypeScript strict mode compatible)
+- Generates correct patterns: `force-dynamic`, pagination shape, query invalidation, form integration
+- Tested end-to-end: HomeBase spec (3 models) → `pnpm build` passes with all 13 pages
+
+**Impact:**
+- Build time: ~15-20 min of LLM generation → ~2-3 min (generators + customization)
+- Token cost: dramatically reduced (JSON config vs thousands of lines of code)
+- Quality: structural — tested templates produce correct code every time
 
 ### 2026-03-06 — Design System Overhaul
 

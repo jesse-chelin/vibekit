@@ -17,7 +17,8 @@ Check what's already been done so `/setup` is safe to re-run:
 2. **Does `.vibekit/intent.json` exist with `"interviewComplete": true`, but no `APP.md`?** →
    Interview completed but build was interrupted. Read intent.json for context and ask:
    "Looks like we started setting up before but didn't finish. Want to pick up where we left off?"
-   If yes, skip to Step 5 (Build) using the saved intent data.
+   If yes and `buildApproved` is true, skip to Step 10 (Build) using the saved intent data.
+   If `buildApproved` is missing/false, present the build plan (Step 9) for approval first.
 
 3. For Steps 1-4, check and skip what's already done:
    - `node_modules/` exists → skip dependency install
@@ -53,41 +54,53 @@ If any step fails, stop immediately, show the error clearly, and suggest a fix.
 Now read `.claude/docs/guided-setup.md` and follow the interview flow starting from **Step 0b** (Quick Start vs Custom Build). Key points:
 
 - **You determine the category** based on what the user describes. Don't show them a menu of categories — listen to what they want and map it to the right foundation.
-- If they give a short description ("a recipe sharing app"), take the Quick Start path — infer everything and present a plan for approval.
-- If they give detailed requirements or ask questions, take the Custom Build path — go step by step with checkpoints.
+- If they give a short description ("a recipe sharing app"), take the Quick Start path — infer everything, apply scope gating, and present an abbreviated build plan for approval.
+- If they give detailed requirements or ask questions, take the Custom Build path — validate the idea (Step 2), define MVP scope (Step 3), then go step by step with checkpoints through Steps 4-8.
 - At every checkpoint, present a summary and wait for approval before continuing.
+- **Build Plan Approval (Step 9) is mandatory.** Present the full build manifest and get explicit user approval before generating any code.
 
 ### After the Interview: Save Intent
 
-After the interview is complete and the user has approved the build plan, save the results to `.vibekit/intent.json`:
+After the interview is complete and the user has approved the build plan (Step 9), save the results to `.vibekit/intent.json`:
 ```json
 {
   "appName": "[name from interview]",
   "category": "[category you determined]",
   "categoryLabel": "[human-readable category]",
   "description": "[one-sentence app description]",
+  "targetUser": "[who the app is for — from Step 2]",
+  "problem": "[what problem it solves — from Step 2]",
+  "competitors": ["[competitor 1]", "[competitor 2]"],
+  "uniqueAngle": "[what makes this version different — from Step 2]",
+  "mvpFeatures": ["[feature 1]", "[feature 2]", "[feature 3]"],
+  "v2Features": ["[deferred feature 1]", "[deferred feature 2]"],
+  "needsLandingPage": false,
+  "needsPayments": false,
   "skills": ["list", "of", "selected", "skills"],
+  "models": ["[Model1]", "[Model2]", "[Model3]"],
+  "pages": ["Dashboard", "[Entity] List", "[Entity] Detail", "Settings"],
   "vibe": "[friendly|professional|creative|bold|minimal|custom]",
   "primaryColor": "[hex color]",
   "setupDate": "[ISO timestamp]",
-  "interviewComplete": true
+  "interviewComplete": true,
+  "buildApproved": true
 }
 ```
 
 ### Build
 
-Follow `guided-setup.md` Step 7 exactly:
-1. Install skills
-2. Generate database models + push
-3. Generate tRPC API routes
-4. Generate pages (one at a time, with loading/empty/error/mobile states)
-5. Wire navigation and data flow
-6. Apply branding
-7. Seed + `pnpm build` to verify
+Follow `guided-setup.md` Step 10 exactly:
+
+1. **Compile build spec** — Write `.vibekit/build-spec.json` from intent.json (see `generators/types.ts` for schema)
+2. **Run generators** — `npx tsx generators/compose.ts` produces all standard files (Prisma models, tRPC routers, pages, dashboard, sidebar, seed data)
+3. **Install skills** — `npx tsx skills-engine/index.ts apply <name>`
+4. **Push + verify** — `pnpm db:push && pnpm build`
+5. **Customization pass** — Business logic, skill integration, branding, non-standard pages
+6. **Seed + final verify** — `pnpm db:seed && pnpm build`
 
 ### Documentation
 
-Generate the documentation vault (`docs/`) and APP.md as described in `guided-setup.md` Step 7h.
+Generate the documentation vault (`docs/`) and APP.md as described in `guided-setup.md` Step 10h.
 
 ### Git + Summary
 

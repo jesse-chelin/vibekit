@@ -7,7 +7,7 @@ Speak in plain language. No jargon. Translate human intent into technical decisi
 
 ## Step 0: Context Check
 
-Check if `.vibekit/intent.json` exists with `"interviewComplete": true`. If it does, a previous `/setup` run completed the interview but may not have finished the build. Read the file and use its contents (appName, category, skills, description) to skip the interview and jump directly to Step 7: Build.
+Check if `.vibekit/intent.json` exists with `"interviewComplete": true`. If it does, a previous `/setup` run completed the interview but may not have finished the build. Read the file and use its contents (appName, category, skills, description) to skip the interview and jump directly to Step 10: Build.
 
 If `intent.json` doesn't exist or `interviewComplete` is missing/false, proceed to Step 0b to start the interview.
 
@@ -45,28 +45,69 @@ From the user's description, identify the category and auto-select:
 | Media management | file-uploads, charts | Media, Collection, Tag | Dashboard, Library, Upload, Detail, Settings |
 | Internal tool | admin-panel, rbac, charts | varies by domain | Dashboard, Admin, Entity list/detail, Settings |
 
-### 2. Present the plan
+### 2. Light validation + auto scope
 
-Show the user a summary before building:
+Infer validation context from the one-sentence description. Don't interrogate — present your inferences for confirmation:
 
 ```
-Here's what I'll build for you:
+Sounds like you're building a [category] app for [inferred user].
+The main problem you're solving: [inferred problem].
 
-App: [Name]
-Type: [Category]
-Skills: [list]
-Models: [list with key fields]
-Pages: [list]
-Deployment: Dev mode (localhost) — you can add deployment later
+For v1, I'll focus on these [3] core features:
+- [Feature A] — [why it's essential]
+- [Feature B] — [why it's essential]
+- [Feature C] — [why it's essential]
 
-Sound good? I can adjust anything, or we can switch to the step-by-step flow if you want more control.
+These can wait for v2:
+- [Feature D] — [why it can wait]
+- [Feature E] — [why it can wait]
+
+Skills: [2-3 max]
+Pages: [5-7 max]
+Models: [3-4 max]
 ```
 
-### 3. Build
+Apply scope gating silently:
+- Cap skills at 3
+- Cap pages at 7 (CRUD for one entity = 1 feature area)
+- Cap MVP features at 5
+- No landing page unless explicitly requested
+- No payments unless explicitly requested
 
-If they approve, jump to **Step 7: Build** below.
+Fill inferred values for `targetUser`, `problem`, `competitors`, `uniqueAngle` with best guesses — less detailed than Custom Build but the vault still has data to work with.
+
+### 3. Abbreviated build plan
+
+Present the same build plan format as Step 9 (Build Plan Approval) but with inferred values:
+
+```
+Here's the complete build plan for [App Name]:
+
+PROBLEM
+[Inferred one sentence]
+
+TARGET USER
+[Inferred one sentence]
+
+WHAT I'LL BUILD
+  Models ([N]): [list]
+  API Routers ([N] routers, [M] procedures): [list]
+  Pages ([N]): [list]
+  Skills ([N]): [list]
+  Deployment: Dev mode (localhost)
+  Design: Friendly (teal) — default
+
+DEFERRED TO V2
+- [features]
+
+Approve this plan, or switch to Custom Build for more control.
+```
+
+### 4. Build
+
+If they approve, jump to **Step 10: Build** below.
 If they want changes, address their feedback and re-present.
-If they want full control, switch to the Custom Build path.
+If they want full control, switch to the Custom Build path at Step 1.
 
 ---
 
@@ -74,7 +115,7 @@ If they want full control, switch to the Custom Build path.
 
 ### Step 1: "What are you building?"
 
-Ask: "Tell me about the app you want to build. What does it do? Who is it for?"
+Ask: "Tell me about the app you want to build. What does it do?"
 
 Listen for category signals:
 - "marketplace" / "store" → e-commerce (suggest: stripe, file-uploads)
@@ -87,24 +128,118 @@ Listen for category signals:
 
 Respond: "So it sounds like you're building a [category]. Here's what I'm thinking..."
 
-### Step 2: "What should it be able to do?"
+Do NOT ask "who is it for?" here — that's covered in depth in Step 2.
 
-Ask feature questions in plain language. Only ask questions relevant to their category — don't dump all 15 options:
+### Step 2: Idea Validation
+
+Conversational, not a checklist. Adapt based on what the user already said in Step 1. Weave these blocks naturally into the conversation — 2-3 questions per exchange, not all at once.
+
+**TONE: Supportive product advisor, not interrogator.**
+- "We" language: "Let's figure out..." not "Tell me..."
+- Validate before challenging: "That's a solid idea. One thing I'd push on..."
+- 2-3 questions per exchange, not 10
+- Escape hatch: if user says "just build it" → wrap up gracefully, infer defaults for any unanswered questions
+
+#### Block A — Target User → `targetUser`
+
+- "Who specifically is this for? Describe your ideal user."
+- Challenge vague answers: "The best apps serve one type of person really well. 'Everyone' means no one — can you narrow it down?"
+- Good: "Households with 2+ adults sharing responsibilities"
+- Too vague: "People who need to be organized"
+
+#### Block B — Problem → `problem`
+
+- "What frustrates these people right now? What do they currently do to solve this?"
+- Challenge weak problems: "How bad is this — daily annoyance or occasional inconvenience? The best apps solve problems people think about every day."
+- Good: "No single app handles chores, bills, and budgets together — they use 3 separate apps"
+- Too weak: "It would be nice to have"
+
+#### Block C — Competitors → `competitors`
+
+- "What do people currently use for this?" (let the user answer first)
+- Claude mentions 1-2 known alternatives from its own knowledge: "I know [X] and [Y] are in this space — have you looked at those?"
+- Only web search if user opts in: "Want me to do a quick search for what else is out there?"
+- Full market research (2.3) stays as a future enhancement
+- Capture as array: `["Splitwise (bills only)", "Tody (chores only)", "YNAB (budgets only)"]`
+
+#### Block D — Unique Angle → `uniqueAngle`
+
+- "So [competitors] exist. What makes YOUR version worth switching to?"
+- Challenge weak angles: "Being 'simpler' is hard to compete on alone — simplicity is table stakes. What's the thing they CAN'T get elsewhere?"
+- Good: "All-in-one for households, not just one category"
+- Too weak: "It'll be better designed"
+
+#### Assumption Challenges (weave in naturally where relevant)
+
+- Landing page for small/internal tool → "If this is for your household or a small group, skip the landing page — build the core experience first. You can add marketing later."
+- Payments in v1 → "Many successful apps launch free to validate demand first. Do you need payments from day 1, or can that wait?"
+- Too many features → "You've mentioned a lot of great ideas. Let's sort them in Step 3 — some are essential for launch, others can come after you have users."
+
+### Step 3: MVP Scope Definition
+
+Compile all features mentioned in Steps 1-2 and propose a v1/v2 split:
+
+```
+Based on what you've told me, here are all the features you've mentioned:
+
+1. [Feature A] — [description]
+2. [Feature B] — [description]
+3. [Feature C] — [description]
+...
+
+For v1, I'd recommend starting with these [3]:
+- [Feature A] — core to the value proposition
+- [Feature B] — needed for Feature A to work
+- [Feature C] — users expect this in a [category] app
+
+These can wait for v2:
+- [Feature D] — nice-to-have, not needed for first value
+- [Feature E] — complex, better after validating demand
+
+Does this split feel right? Move anything between v1 and v2?
+```
+
+#### Scope Gating Rules
+
+| Dimension | Recommended | Hard Max | Challenge Script |
+|-----------|------------|----------|------------------|
+| MVP features | 3-4 | 5 | "The best v1s focus on 3 things done well. Which could wait?" |
+| Pages (feature areas) | 5-6 | 7 | "Every extra page is more to build, test, and maintain." |
+| Skills | 2 | 3 | "Each skill adds complexity. Which 3 are essential for launch?" |
+| User-facing models | 3-4 | 5 | "Can any of these be fields on another model instead?" |
+
+**Page bundling:** CRUD for one entity (list + detail + create + edit) counts as 1 feature area, not 4 pages. Dashboard and Settings don't count against the limit.
+
+#### Skill Justification Required
+
+Don't auto-include skills just because they sound useful. Require justification for these:
+
+- **Charts** → "What decision would charts help users make?"
+- **Payments** → "Will users pay from day 1?"
+- **Admin panel** → "Who is the admin? Just you = database viewer is enough."
+- **i18n** → "Do you have users who need another language right now?"
+- **AI features** → "What specific task does the AI help with?"
+
+Captures: `mvpFeatures[]`, `v2Features[]`, `needsLandingPage`, `needsPayments`
+
+### Step 4: "What should it be able to do?"
+
+Now select skills informed by the scope decisions from Step 3. Only ask questions relevant to their category and MVP features — don't dump all 15 options:
 
 - "Will people need accounts?" → Auth is already included
-- "Will you charge money?" → stripe skill
+- "Will you charge money?" → stripe skill (only if `needsPayments` is true from Step 3)
 - "Do you want AI features?" → "Should the AI run on your computer (free, private) or in the cloud (small cost per use)?" → ollama / cloud-llm
 - "Will people upload files?" → file-uploads skill
 - "Should things update in real-time?" → realtime-chat skill
-- "Do you need charts or dashboards?" → charts skill
+- "Do you need charts or dashboards?" → charts skill (require justification)
 - "Does location matter?" → maps skill
 - "Should the app send emails?" → email skill
-- "Do you need an admin area?" → admin-panel skill
-- "Multiple languages?" → i18n skill
+- "Do you need an admin area?" → admin-panel skill (require justification)
+- "Multiple languages?" → i18n skill (require justification)
 
 #### Checkpoint 1: Confirm skills
 
-Before moving on, present the selected skills:
+Before moving on, present the selected skills. Enforce the 3-skill max from Step 3:
 
 ```
 Based on what you've told me, here's what I'll set up:
@@ -114,12 +249,14 @@ Included by default:
 - Dashboard with stats
 - Settings page
 
-Skills I'll install:
-- [skill] — [one-line reason]
-- [skill] — [one-line reason]
+Skills I'll install ([N] of 3 max):
+- [skill] — [one-line reason tied to an MVP feature]
+- [skill] — [one-line reason tied to an MVP feature]
 
 Anything to add or remove?
 ```
+
+If the user wants more than 3 skills, challenge: "Each skill adds complexity. Which 3 are essential for launch? The others can be added in v2 — the skills system makes it easy to install them later."
 
 #### Skill Safety Constraints (enforce silently)
 
@@ -136,21 +273,27 @@ If a user selects conflicting skills, resolve silently:
 - `ollama` + `cloud-llm` → both is fine, offer unified interface
 - `deploy-vercel` + `deploy-docker` → warn: "Vercel handles deployment for you, so you won't need Docker. Want Vercel (simpler) or Docker (more control)?"
 
-### Step 3: "What things does your app track?"
+### Step 5: "What things does your app track?"
 
-Ask: "What are the main things in your app? For example, a recipe app tracks recipes and ingredients."
+Scoped to MVP features only. Reference the v1 feature list from Step 3:
+
+Ask: "Based on your v1 features ([list MVP features]), what are the main things your app needs to track? For example, a recipe app tracks recipes and ingredients."
 
 Translate their concepts into:
 - Prisma models in `prisma/schema.prisma`
 - tRPC routers in `src/trpc/routers/`
 - Pages in `src/app/(app)/`
 
+Enforce the model limit from Step 3 (recommended 3-4, hard max 5 user-facing models). If the user describes more:
+- "Can any of these be fields on another model instead of a separate model?"
+- "Which of these are essential for your v1 features, and which support v2 features?"
+
 #### Checkpoint 2: Confirm data model
 
 Present the models before generating code:
 
 ```
-Here are the things your app will track:
+Here are the things your app will track ([N] models, max 5):
 
 [Model Name]
   - [field]: [type] — [what it's for]
@@ -160,19 +303,24 @@ Here are the things your app will track:
 [Model Name]
   ...
 
-Does this capture everything? Anything missing or wrong?
++ User (built-in from auth)
+
+Does this capture everything for v1? Anything missing or wrong?
 ```
 
-### Step 4: "What screens do you need?"
+### Step 6: "What screens do you need?"
 
-Suggest based on their entities:
+Scoped to MVP features. Suggest based on their entities and enforce page limits:
+
 - Dashboard with stats → dashboard page + stat-card components
 - List/table view → data-table with sort/filter
 - Create/edit forms → form pages with Zod validation
 - Detail pages → detail-layout with sidebar
 - Settings → settings-layout with tabs
-- Landing page → marketing page template
+- Landing page → only if `needsLandingPage` is true from Step 3
 - Onboarding → wizard component for first-run setup
+
+**Page bundling:** CRUD for one entity (list + detail + create + edit) counts as 1 feature area. Dashboard and Settings don't count against the 7-page limit.
 
 **IMPORTANT**: For each screen, confirm:
 - What does it show when empty? (first-time user experience)
@@ -182,7 +330,7 @@ Suggest based on their entities:
 #### Checkpoint 3: Confirm page list
 
 ```
-Here are all the screens I'll build:
+Here are all the screens I'll build ([N] feature areas, max 7):
 
 Pages:
 - Dashboard — stats overview, recent activity, quick actions
@@ -190,7 +338,7 @@ Pages:
 - [Entity] Detail — full view with [sidebar info]
 - Create [Entity] — form with [fields]
 - Settings — General, [other tabs]
-- Landing — public page explaining what the app does
+[- Landing — public page (only if needed)]
 
 Each page will include:
 - Loading skeleton (so it never flashes blank)
@@ -198,10 +346,12 @@ Each page will include:
 - Error handling (retry button if something goes wrong)
 - Mobile layout (works on phones)
 
-Total: [N] pages. Ready to move on?
+Total: [N] pages across [N] feature areas. Ready to move on?
 ```
 
-### Step 5: "Who needs to access this?"
+If total feature areas exceed 7: "Every extra page is more to build, test, and maintain. Which feature areas could wait for v2?"
+
+### Step 7: "Who needs to access this?"
 
 Ask deployment questions:
 - "Just for you?" → No deploy skill, stay on dev mode
@@ -214,7 +364,7 @@ Ask deployment questions:
 
 Always explain: "I'd recommend [X] because [reason]. It costs about [Y]/month."
 
-### Step 6: "Let's pick a vibe"
+### Step 8: "Let's pick a vibe"
 
 Confirm the app name if not already established during the conversation, then present vibe options:
 
@@ -286,136 +436,312 @@ Save the chosen vibe to `.vibekit/intent.json`:
 }
 ```
 
-#### Checkpoint 4: Final confirmation
+### Step 9: Build Plan Approval
 
-Present the complete build plan before writing any code:
+Present the complete build manifest before any code generation. This replaces the old final confirmation — it's comprehensive, not abbreviated.
 
 ```
-Here's everything I'm about to build:
+Here's the complete build plan for [App Name]:
 
-App: [Name]
-Color: [color]
-Skills: [list]
-Models: [N] models — [names]
-Pages: [N] pages — [names]
-Deployment: [choice or "dev mode for now"]
+PROBLEM
+[One sentence from Step 2]
 
-This will take a few minutes. Ready to go?
+TARGET USER
+[One sentence from Step 2]
+
+UNIQUE ANGLE
+[One sentence from Step 2]
+
+WHAT I'LL BUILD
+
+  Models ([N]):
+  - [Model] — [key fields] — for [MVP feature]
+  ...
+  + User (built-in)
+
+  API Routers ([N] routers, [M] procedures):
+  - [router]: list, byId, create, update, delete
+  ...
+
+  Pages ([N]):
+  - Dashboard — stats, recent activity
+  - [Entity] List — searchable table
+  - [Entity] Detail — full view
+  - Create [Entity] — form
+  - Settings — profile, preferences
+  [+ Landing page if needed]
+
+  Skills ([N]):
+  - [skill] — [reason tied to MVP feature]
+  ...
+
+  Deployment: [choice]
+  Design: [vibe] ([color])
+
+DEFERRED TO V2
+- [feature] — [reason it can wait]
+...
+
+Approve this plan, or tell me what to change.
 ```
+
+**CRITICAL:** Claude must NOT generate any code until the user explicitly approves the build plan. If the user requests changes, update the plan and re-present it. Only proceed to Step 10 after clear approval (e.g., "looks good", "approved", "let's go", "build it").
 
 ---
 
-## Step 7: Build
+## Step 10: Build
 
 ### Build Phase (follow this order exactly, with verification after each step)
 
-#### 7a. Install Skills
+#### 10a. Compile Build Spec
+
+Translate the interview results into `.vibekit/build-spec.json` — a structured JSON config that the code generators consume to produce all standard files. The LLM writes this file directly.
+
+##### Build Spec Field Reference
+
+**Top-level fields:**
+
+| Field | Source | Example |
+|-------|--------|---------|
+| `appName` | `intent.json.appName` | `"HomeBase"` |
+| `models` | Interview Steps 5 + 3 (entities + scope) | See Model Spec below |
+| `sidebar` | Interview Step 6 (pages) | Always: Dashboard, one per model, Settings |
+| `dashboard` | Interview Step 6 | Description from intent, pick most active model for recent |
+| `settings` | Default | `{ "tabs": [{ "label": "General", "href": "/settings/general" }] }` |
+
+**Model spec — mapping from interview to JSON:**
+
+| Field | How to derive | Example |
+|-------|--------------|---------|
+| `name` | PascalCase entity name from Step 5 | `"Chore"` |
+| `slug` | Lowercase plural for URL path | `"chores"` |
+| `label` | Human-readable plural | `"Chores"` |
+| `labelSingular` | Human-readable singular | `"Chore"` |
+| `icon` | Pick from Lucide icons matching the entity's domain (see Icon Guide below) | `"CheckSquare"` |
+| `iconColor` | Cycle through palette: 1st model blue, 2nd emerald, 3rd amber, 4th violet | `"text-emerald-500"` |
+| `fields` | From Step 5 entity fields (see Field Spec below) | See example |
+| `belongsTo` | FK relationships to OTHER app models (NOT User — User is auto-added) | `[{ "model": "Household", "field": "householdId" }]` |
+| `hasMany` | Model names that have a belongsTo pointing to THIS model | `["Chore", "Bill"]` |
+| `searchFields` | Text fields users would search by (name/title + description if exists) | `["title", "description"]` |
+| `defaultSort` | Almost always `"updatedAt"` | `"updatedAt"` |
+
+**Field spec — mapping from interview to JSON:**
+
+| Field | Rule | Example |
+|-------|------|---------|
+| `name` | camelCase field name | `"dueDate"` |
+| `type` | Map from interview: text→`"String"`, number→`"Int"` or `"Float"`, yes/no→`"Boolean"`, date→`"DateTime"` | `"DateTime"` |
+| `required` | `true` for name/title fields and key data. `false` for descriptions, dates, optional fields | `false` |
+| `maxLength` | `255` for short strings (names, titles). `1000`-`2000` for descriptions. Omit for non-strings | `255` |
+| `enum` | For constrained-value fields (status, priority, category, type). List all valid values | `["pending", "in_progress", "completed"]` |
+| `defaultEnum` | Default value for enum fields | `"pending"` |
+| `showInList` | `true` for the display field (name/title) + 1-3 key fields users scan in a table. `false` for descriptions, long text | `true` |
+| `showInDetail` | `true` (default) for all fields. Set `false` only to hide a field from the detail sidebar | `true` |
+| `listLabel` | Override column header if the camelCase→Title conversion isn't good enough | `"Amount"` |
+
+**belongsTo rules:**
+- Only include relationships to OTHER app models (e.g., Chore → Household)
+- Do NOT include User — every model gets `userId` automatically
+- The `field` is always `{lowerCaseModelName}Id` (e.g., `"householdId"`)
+
+**hasMany rules:**
+- List model NAMES (PascalCase) that reference this model via belongsTo
+- Only the parent model lists its children. The child model uses belongsTo instead
+- Example: Household hasMany `["Chore", "Bill"]` because both Chore and Bill belongTo Household
+
+##### Icon Guide
+
+Pick icons from [Lucide](https://lucide.dev) that match the entity's domain:
+
+| Domain | Recommended Icons |
+|--------|------------------|
+| Home / household | `Home`, `Building`, `Building2` |
+| Tasks / chores | `CheckSquare`, `ListTodo`, `ClipboardList`, `CircleCheck` |
+| Money / bills / payments | `Receipt`, `DollarSign`, `CreditCard`, `Wallet`, `Banknote` |
+| People / users / teams | `Users`, `UserPlus`, `Contact` |
+| Projects / work | `FolderKanban`, `Briefcase`, `Target` |
+| Messages / chat | `MessageSquare`, `Mail`, `Send` |
+| Files / documents | `FileText`, `Files`, `FolderOpen` |
+| Calendar / events | `Calendar`, `CalendarDays`, `Clock` |
+| Food / recipes | `ChefHat`, `UtensilsCrossed`, `Cookie` |
+| Shopping / products | `ShoppingCart`, `Package`, `Store` |
+| Health / fitness | `Heart`, `Activity`, `Dumbbell` |
+| Education / learning | `GraduationCap`, `BookOpen`, `School` |
+| Music / media | `Music`, `Headphones`, `Film` |
+| Settings / config | `Settings`, `Wrench`, `Cog` |
+| Analytics / data | `BarChart3`, `TrendingUp`, `PieChart` |
+| General | `Star`, `Bookmark`, `Tag`, `Zap`, `Globe` |
+
+##### Icon Color Palette
+
+Assign colors in order as models are listed. Cycle through:
+
+1. `"text-blue-500"` — first model
+2. `"text-emerald-500"` — second model
+3. `"text-amber-500"` — third model
+4. `"text-violet-500"` — fourth model
+5. Cycle back to blue for 5th, etc.
+
+##### Sidebar Convention
+
+Always include these entries in order:
+1. Dashboard (`LayoutDashboard` icon, `/dashboard`)
+2. One entry per app model (same icon as model, `/{slug}`)
+3. Settings (`Settings` icon, `/settings`)
+
+##### Dashboard Convention
+
+- `description`: A welcome message referencing the app's purpose (e.g., `"Welcome back! Here's your household overview."`)
+- `recentEntity`: The PascalCase model name of the most "active" entity — the one users interact with most frequently. For task-like apps pick the task model; for content apps pick the content model.
+
+##### Worked Example
+
+For a household management app with three models (from the interview):
+
+```json
+{
+  "appName": "HomeBase",
+  "models": [
+    {
+      "name": "Household",
+      "slug": "households",
+      "label": "Households",
+      "labelSingular": "Household",
+      "icon": "Home",
+      "iconColor": "text-blue-500",
+      "fields": [
+        { "name": "name", "type": "String", "required": true, "maxLength": 255, "showInList": true },
+        { "name": "description", "type": "String", "required": false, "maxLength": 1000 }
+      ],
+      "belongsTo": [],
+      "hasMany": ["Chore", "Bill"],
+      "searchFields": ["name", "description"],
+      "defaultSort": "updatedAt"
+    },
+    {
+      "name": "Chore",
+      "slug": "chores",
+      "label": "Chores",
+      "labelSingular": "Chore",
+      "icon": "CheckSquare",
+      "iconColor": "text-emerald-500",
+      "fields": [
+        { "name": "title", "type": "String", "required": true, "maxLength": 255, "showInList": true },
+        { "name": "description", "type": "String", "required": false, "maxLength": 2000 },
+        { "name": "status", "type": "String", "required": false, "enum": ["pending", "in_progress", "completed"], "defaultEnum": "pending", "showInList": true },
+        { "name": "priority", "type": "String", "required": false, "enum": ["low", "medium", "high"], "defaultEnum": "medium", "showInList": true },
+        { "name": "dueDate", "type": "DateTime", "required": false }
+      ],
+      "belongsTo": [{ "model": "Household", "field": "householdId" }],
+      "hasMany": [],
+      "searchFields": ["title", "description"],
+      "defaultSort": "updatedAt"
+    },
+    {
+      "name": "Bill",
+      "slug": "bills",
+      "label": "Bills",
+      "labelSingular": "Bill",
+      "icon": "Receipt",
+      "iconColor": "text-amber-500",
+      "fields": [
+        { "name": "title", "type": "String", "required": true, "maxLength": 255, "showInList": true },
+        { "name": "amount", "type": "Float", "required": true, "showInList": true, "listLabel": "Amount" },
+        { "name": "status", "type": "String", "required": false, "enum": ["pending", "paid", "overdue"], "defaultEnum": "pending", "showInList": true },
+        { "name": "dueDate", "type": "DateTime", "required": false }
+      ],
+      "belongsTo": [{ "model": "Household", "field": "householdId" }],
+      "hasMany": [],
+      "searchFields": ["title"],
+      "defaultSort": "updatedAt"
+    }
+  ],
+  "sidebar": [
+    { "title": "Dashboard", "href": "/dashboard", "icon": "LayoutDashboard" },
+    { "title": "Households", "href": "/households", "icon": "Home" },
+    { "title": "Chores", "href": "/chores", "icon": "CheckSquare" },
+    { "title": "Bills", "href": "/bills", "icon": "Receipt" },
+    { "title": "Settings", "href": "/settings", "icon": "Settings" }
+  ],
+  "dashboard": {
+    "description": "Welcome back! Here's your household overview.",
+    "recentEntity": "Chore"
+  },
+  "settings": {
+    "tabs": [
+      { "label": "General", "href": "/settings/general" }
+    ]
+  }
+}
+```
+
+**What this produces:** 3 Prisma models with relations and indexes, 3 tRPC routers (15 procedures), 13 pages (list + detail + create + edit per model + dashboard), sidebar with 5 nav items, and seed data — all in seconds.
+
+**Verify**: The build-spec is valid JSON and all model names referenced in `belongsTo`, `hasMany`, `sidebar`, and `dashboard.recentEntity` match actual model names in the spec.
+
+#### 10b. Run Code Generators
+
+```bash
+npx tsx generators/compose.ts
+```
+
+This produces ALL standard files in seconds:
+- Prisma models (appended to `schema.prisma`)
+- tRPC routers (5 procedures each: list, byId, create, update, delete)
+- List pages (server + client component + loading skeleton)
+- Detail pages (sidebar + content + loading skeleton + delete button)
+- Form pages (create + edit + loading skeletons)
+- Dashboard (stat cards + recent entity)
+- Sidebar navigation
+- Seed data
+
+**Verify**: Generator completes without errors.
+
+#### 10c. Install Skills
+
 ```bash
 npx tsx skills-engine/index.ts apply <name>
 ```
 **Verify**: Each skill installs without errors. If a skill fails, diagnose and fix before continuing — don't skip it and hope for the best.
 
-#### 7b. Generate Database
-- Create Prisma models for each entity
-- Run `pnpm db:push`
+#### 10d. Push Database + Verify Generated Code
 
-**Verify**: `pnpm db:push` succeeds. If it fails (schema error, SQLite limitation), fix the schema and re-push. Do NOT proceed with a broken schema.
-
-#### 7c. Generate API
-
-For each Prisma model, create a tRPC router with these **5 standard procedures**:
-
-| Procedure | Type | Returns | Purpose |
-|-----------|------|---------|---------|
-| `list` | query | `{ items, total, page, pageSize, totalPages }` | Paginated list with optional search/filters |
-| `byId` | query | Single record | Detail view, throws error if not found |
-| `create` | mutation | Created record | Zod-validated input, scoped to userId |
-| `update` | mutation | Updated record | `{ id, ...optionalFields }` pattern |
-| `delete` | mutation | Deleted record | Scoped to userId (prevents cross-user deletion) |
-
-**Requirements:**
-- All procedures use `protectedProcedure` (not `publicProcedure`)
-- All scope queries to `ctx.session.user.id`
-- `list` MUST return `{ items, total, page, pageSize, totalPages }` — never a raw array. Page templates access `data.items`, and a raw array will crash every list page.
-- Import Zod from `"zod/v4"` (not `"zod"`)
-- See `.claude/docs/adding-an-api-route.md` for the complete router template with worked example
-
-**Register each router** in `src/trpc/router.ts`:
-```typescript
-import { entityRouter } from "@/trpc/routers/entity";
-// Add to appRouter: entity: entityRouter,
-```
-
-**Update dashboard stats** in `src/trpc/routers/user.ts`:
-Add a count for each new entity type to the `stats` procedure. Every dashboard stat card needs a count source from this procedure.
-
-**Verify**: No TypeScript errors in the router files. Run `npx tsc --noEmit` on the router directory if unsure.
-
-#### 7c-checkpoint. Commit: data models and API
 ```bash
-git add -A && git commit -m "feat: add data models and API"
+pnpm db:push
+pnpm build
 ```
-This creates a save point. If the page generation step fails, you won't lose the schema and router work.
 
-#### 7d. Generate Pages
+**Verify**: Both commands succeed. If the build fails, fix the issue (likely a generator bug or skill conflict) and re-run. Catch errors early — do NOT proceed with a broken build.
 
-**Parallel page generation**: Identify pages that don't depend on each other (e.g., a Chores page and a Bills page are independent — they have separate routers and models). Use the Task tool to launch parallel agents for independent pages. Each agent should create `page.tsx` + `loading.tsx` + client component for one page. Pages that share data or components should be built sequentially. This can cut build time by 40-60%.
-
-FOR EACH PAGE, create ALL of these before moving to the next page:
-
-1. `page.tsx` — Using PageHeader + `space-y-6` sections (layout provides `p-4 md:p-6` padding)
-2. `loading.tsx` — Skeleton matching the exact layout (same grid, same card sizes)
-3. **Empty state** — EmptyState component with icon, title, description, and action button
-4. **Error handling** — Every data-fetching component handles errors with retry
-5. **Mobile layout** — Verified at 375px width, no overflow
-6. **Real data** — Pages MUST fetch from tRPC, not hardcode demo data. Use the **Page Type Wiring Guide** below:
-
-   | Page Type | Server `page.tsx` | Client `_components/` | Data Access |
-   |-----------|-------------------|----------------------|-------------|
-   | Dashboard | `caller.user.stats()` + `caller.entity.list({ pageSize: 5 })` | N/A (server component) | Stats object + `recentItems.items` |
-   | List | `void trpc.entity.list.prefetch({})` → `<HydrateClient>` | `entity-list.tsx`: `trpc.entity.list.useQuery({})` | `data?.items.length`, `data.items` |
-   | Detail | `caller.entity.byId({ id })` + try/catch → `notFound()` | Optional: `delete-entity-button.tsx` | Single record directly |
-   | Create | N/A (client `"use client"` page) | `useForm({ resolver: zodResolver(schema), defaultValues })` + `trpc.entity.create.useMutation()` | Form state |
-   | Edit | N/A (client `"use client"` page) | `trpc.entity.byId.useQuery({ id })` + `useForm({ values })` + `trpc.entity.update.useMutation()` | Query → form values |
-
-   **Wiring rules (apply to every page):**
-   - **Schema Sync:** Form Zod schema mirrors the tRPC input schema but WITHOUT `.default()`. Use `defaultValues` on `useForm()` instead.
-   - **Invalidation:** Every create/update/delete mutation must invalidate `entity.list` AND `user.stats` (dashboard counts).
-   - **List Data Contract:** Client components access `data?.items.length` and `data.items` — never `data?.length` or `data` directly. The list procedure returns `{ items, total, page, pageSize, totalPages }`.
-   - **Client Components:** Interactive list components go in `_components/entity-list.tsx` adjacent to `page.tsx`.
-   - **Dynamic Export:** All pages using `caller` or `trpc.prefetch()` require `export const dynamic = "force-dynamic"`.
-   - **Select Fields:** shadcn Select doesn't work with `form.register()` — use `form.watch("field")` + `form.setValue("field", value)`.
-
-   See `.claude/docs/adding-a-page.md` for complete code patterns per page type.
-
-**Verify each page**: Before starting the next page, mentally walk through:
-- What does a first-time user see? (empty state)
-- What does a returning user see? (data loaded)
-- What if the network is slow? (loading skeleton)
-- What if the API is down? (error state)
-- What if they're on a phone? (mobile layout)
-
-If any answer is "a blank screen" or "it breaks", fix it now.
-
-CRITICAL: Do NOT skip any of these. The #1 mistake in AI-generated apps is
-shipping pages without empty states, error handling, and loading skeletons.
-These are NOT polish — they are core features. A page without an empty state
-is like a function without error handling. It's incomplete.
-
-#### 7d-checkpoint. Commit: all pages
+#### 10d-checkpoint. Commit: generated scaffolding
 ```bash
-git add -A && git commit -m "feat: add all pages"
+git add -A && git commit -m "feat: add generated scaffolding"
 ```
-Another save point before wiring up navigation and data flow.
+This creates a save point. The generators produced all standard CRUD pages. If the customization pass introduces issues, you can revert to this.
 
-#### 7e. Navigation and Data Flow
-- Add pages to sidebar navigation
-- Wire up all query invalidations (mutations must refresh all affected views)
+#### 10e. LLM Customization Pass
 
-#### 7f. Branding
-- Apply the user's chosen name and color throughout
+The generators produce the standard 80%. This step handles the 20% that's unique:
 
-#### 7g. Seed and Verify
+- **Business logic** — Custom validation rules, computed fields, non-standard workflows
+- **Skill integration** — Wire skill-specific features into generated pages (e.g., file upload fields, chart components)
+- **Branding** — Apply the user's chosen vibe palette to `globals.css`
+- **Non-standard pages** — Any pages that don't follow the standard CRUD pattern
+- **Landing page** — If `needsLandingPage` is true, customize the landing page content
+
+**Page Type Reference** (for any custom pages that need manual creation):
+
+| Page Type | Server `page.tsx` | Client `_components/` | Data Access |
+|-----------|-------------------|----------------------|-------------|
+| Dashboard | `caller.user.stats()` + `caller.entity.list({ pageSize: 5 })` | N/A (server component) | Stats object + `recentItems.items` |
+| List | `void trpc.entity.list.prefetch({})` → `<HydrateClient>` | `entity-list.tsx`: `trpc.entity.list.useQuery({})` | `data?.items.length`, `data.items` |
+| Detail | `caller.entity.byId({ id })` + try/catch → `notFound()` | Optional: `delete-entity-button.tsx` | Single record directly |
+| Create | N/A (client `"use client"` page) | `useForm({ resolver: zodResolver(schema), defaultValues })` + `trpc.entity.create.useMutation()` | Form state |
+| Edit | N/A (client `"use client"` page) | `trpc.entity.byId.useQuery({ id })` + `useForm({ values })` + `trpc.entity.update.useMutation()` | Query → form values |
+
+See `.claude/docs/adding-a-page.md` for complete code patterns per page type.
+
+#### 10g. Seed and Verify
 ```bash
 pnpm db:push && pnpm db:seed
 pnpm build
@@ -423,11 +749,11 @@ pnpm build
 
 **Verify**: Build passes with zero errors. If it fails, fix and re-run. Do NOT skip the build check.
 
-#### 7h. Generate Documentation Vault
+#### 10h. Generate Documentation Vault
 
 Create the `docs/` Obsidian vault with real content from the interview and build. This is the project's structured knowledge base — PRDs, decision records, engineering docs, and feature specs.
 
-##### 7h-1. Create `.obsidian/` config
+##### 10h-1. Create `.obsidian/` config
 
 Create these files for a ready-to-open Obsidian vault:
 
@@ -512,13 +838,13 @@ Create these files for a ready-to-open Obsidian vault:
 
 Do NOT create `workspace.json` — Obsidian generates it on first open.
 
-##### 7h-2. Copy template files
+##### 10h-2. Copy template files
 
 Copy the two templates that ship with vibekit:
 - `docs/decisions/_template.md` — already exists
 - `docs/features/_template.md` — already exists
 
-##### 7h-3. Generate vault documents
+##### 10h-3. Generate vault documents
 
 Read `.vibekit/intent.json` for interview data. Read `prisma/schema.prisma` for the data model. Read `src/trpc/routers/*.ts` for the API surface. Generate these documents with REAL content — not templates, not placeholders.
 
@@ -634,7 +960,7 @@ Use `[[wiki-links]]` for cross-references between docs (shortest unambiguous nam
 - [List every feature built in the initial setup]
 ```
 
-##### 7h-4. Generate `APP.md`
+##### 10h-4. Generate `APP.md`
 
 Generate `APP.md` in the project root as a concise quick-reference. Follow the structure in CLAUDE.md's "Living Documentation" section:
 - App name and one-paragraph description
@@ -660,7 +986,7 @@ Full project documentation is in the `docs/` Obsidian vault. Open it in Obsidian
 - [Changelog](docs/changelog.md)
 ```
 
-##### 7h-5. Verify vault
+##### 10h-5. Verify vault
 
 - Every `.md` file in `docs/` has valid YAML frontmatter with `type`, `status`, `created`
 - All `[[wiki-links]]` resolve to existing files in the vault
@@ -668,10 +994,10 @@ Full project documentation is in the `docs/` Obsidian vault. Open it in Obsidian
 - No TODO, FIXME, or placeholder text — every section has real content
 - Feature docs reference correct models and routes from the actual build
 
-#### 7i. Deployment (if applicable)
+#### 10i. Deployment (if applicable)
 If a deploy skill was installed, walk through setup step by step. Each deployment skill's SKILL.md has its own guided setup.
 
-#### 7j. Initialize git and make the first commit
+#### 10j. Initialize git and make the first commit
 ```bash
 git init
 git add .

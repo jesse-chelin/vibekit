@@ -45,6 +45,22 @@ pnpm db:seed      # Seed database with demo data
 pnpm db:studio    # Open Prisma Studio
 ```
 
+### Code Generators
+
+```bash
+npx tsx generators/compose.ts [path-to-build-spec]
+```
+
+Produces all standard CRUD scaffolding from a JSON build spec (`generators/types.ts` defines the schema). Default spec path: `.vibekit/build-spec.json`.
+
+**What it generates:** Prisma models, tRPC routers (5 procedures each), list pages (server + client + loading), detail pages (sidebar + content + loading + delete button), form pages (create + edit + loading), dashboard (stat cards + recent entity), sidebar navigation, seed data.
+
+**Idempotent:** Safe to re-run — cleans previous generated models/pages before regenerating.
+
+**The LLM writes the build-spec.json** during Step 10a of the build, then generators handle the standard 80%. The LLM customization pass (Step 10e) handles business logic, skill integration, branding, and non-standard features.
+
+### Skills Engine
+
 Install a skill: `npx tsx skills-engine/index.ts apply <skill-name>`
 Remove a skill: `npx tsx skills-engine/index.ts remove <skill-name>`
 List skills: `npx tsx skills-engine/index.ts list`
@@ -348,6 +364,7 @@ Page padding is ALWAYS `p-4 md:p-6`. Every page. No exceptions. This single rule
 - DO NOT hardcode data in pages — always fetch from tRPC routers. No fake arrays, no demo data, no placeholder numbers.
 - DO NOT return raw arrays from `list` procedures — always return `{ items, total, page, pageSize, totalPages }`. Page templates access `data.items`.
 - DO NOT omit `export const dynamic = "force-dynamic"` on pages using `caller` or `trpc.prefetch()` — the build will fail because auth context isn't available at static generation time
+- DO NOT begin code generation until the user has explicitly approved the build plan (Step 9 of guided-setup.md). Present the full manifest — models, routers, pages, skills, deferred features — and wait for approval. If the user requests changes, update and re-present.
 
 ## Interactive State Guidelines
 

@@ -106,8 +106,10 @@ That's it. Claude will:
 - Check your prerequisites (Node.js, pnpm, git)
 - Install dependencies and set up the database
 - Ask you what you want to build — just describe it in plain English
-- Figure out the best foundation for your app
-- Build your pages, database, and API
+- Validate your idea, challenge assumptions, and scope the MVP
+- Present a build plan for approval before writing any code
+- Compile a build spec and run code generators to produce all standard scaffolding in seconds
+- Customize with business logic, skill integration, and branding
 - Set up documentation so future sessions always know the current state
 
 When it's done, run `pnpm dev` to see your app at **http://localhost:3000**.
@@ -167,6 +169,29 @@ Need a specific feature? Skills are pre-built packages Claude can install in sec
 
 ---
 
+## ⚙️ Code Generators
+
+The `generators/` directory contains TypeScript scripts that produce app scaffolding from a JSON build spec. During `/setup`, Claude compiles a `build-spec.json` describing your models, fields, and relations, then the generators produce everything:
+
+```bash
+npx tsx generators/compose.ts .vibekit/build-spec.json
+```
+
+| Generator | Output |
+|-----------|--------|
+| `prisma-model.ts` | Prisma models with relations, indexes, User relations |
+| `trpc-router.ts` | 5-procedure routers (list, byId, create, update, delete) + registration |
+| `list-page.ts` | Server page + client DataTable component + loading skeleton |
+| `detail-page.ts` | Detail page with sidebar + content + delete button |
+| `form-page.ts` | Create + edit pages with Zod validation + loading skeletons |
+| `dashboard.ts` | Stat cards + recent activity card |
+| `sidebar.ts` | Navigation with correct icons and routes |
+| `seed.ts` | Realistic seed data |
+
+The build spec schema is defined in `generators/types.ts`. Generators are idempotent — safe to re-run.
+
+---
+
 ## 🛠️ Troubleshooting
 
 **`node: command not found`**
@@ -201,14 +226,16 @@ Then open Claude Code and run `/setup` again.
 
 Vibekit isn't an AI wrapper or a no-code platform. It's a carefully constrained starter kit that makes Claude Code produce consistently high-quality output by:
 
-1. **Constraining the design space** — 30 curated components, a fixed spacing scale, 4 animation presets. There's literally no way to produce inconsistent UI.
-2. **Mandating completeness** — Every page must have loading states, empty states, error states, and mobile layouts before it's considered done.
-3. **Testing against reality** — Pages must handle 0 items, 100+ items, long text, missing fields, rapid clicks, and API failures.
-4. **Giving you the code** — It's standard Next.js + TypeScript. You own every line and can deploy anywhere.
+1. **Validating before building** — Challenges your idea, identifies competitors, scopes your MVP. The interview prevents you from building the wrong thing.
+2. **Generating, not writing** — TypeScript code generators produce 80% of the app (models, routers, pages, dashboard, sidebar, seed data) from a JSON build spec. The LLM handles the 20% that's unique.
+3. **Constraining the design space** — ~37 curated components, a fixed spacing scale, 4 animation presets. There's literally no way to produce inconsistent UI.
+4. **Mandating completeness** — Every page must have loading states, empty states, error states, and mobile layouts before it's considered done.
+5. **Testing against reality** — Pages must handle 0 items, 100+ items, long text, missing fields, rapid clicks, and API failures.
+6. **Giving you the code** — It's standard Next.js + TypeScript. You own every line and can deploy anywhere.
 
 ### Tech Stack
 
-Next.js 15 · TypeScript · Tailwind CSS v4 · shadcn/ui · Prisma · tRPC · Auth.js · TanStack Query · Geist fonts
+Next.js 16 · TypeScript · Tailwind CSS v4 · shadcn/ui · Prisma · tRPC · Auth.js · TanStack Query · Geist fonts
 
 ## License
 
