@@ -11,6 +11,8 @@ import { generateFormPages } from "./form-page";
 import { generateDashboard } from "./dashboard";
 import { generateSidebar } from "./sidebar";
 import { generateSeed } from "./seed";
+import { generateAppChrome } from "./app-chrome";
+import { stripTemplateModels } from "./prisma-model";
 
 function loadBuildSpec(specPath: string): BuildSpec {
   if (!fs.existsSync(specPath)) {
@@ -35,6 +37,11 @@ function cleanupTemplateFiles(): void {
   deleteFileOrDir(resolvePath("src", "trpc", "routers", "project.ts"));
   deleteFileOrDir(resolvePath("src", "trpc", "routers", "task.ts"));
   deleteFileOrDir(resolvePath("src", "app", "(app)", "projects"));
+
+  // Remove template pages that are generic stubs
+  deleteFileOrDir(resolvePath("src", "app", "(app)", "onboarding"));
+  deleteFileOrDir(resolvePath("src", "app", "(app)", "settings", "billing", "page.tsx"));
+  deleteFileOrDir(resolvePath("src", "app", "(app)", "settings", "team", "page.tsx"));
 }
 
 function main(): void {
@@ -56,7 +63,15 @@ function main(): void {
   console.log("Cleaning template files...");
   cleanupTemplateFiles();
 
-  // 2. Generate data layer
+  // 2. Strip template Prisma models (Project/Task) before generating new ones
+  console.log("\nStripping template Prisma models...");
+  stripTemplateModels();
+
+  // 3. Generate app chrome (logo, search command, root redirect)
+  console.log("\nGenerating app chrome...");
+  generateAppChrome(spec);
+
+  // 4. Generate data layer
   console.log("\nGenerating data layer...");
   if (isExternal) {
     // External: skip Prisma models, use external router generator
@@ -67,7 +82,7 @@ function main(): void {
     generateTrpcRouters(spec);
   }
 
-  // 3. Generate pages for each model
+  // 5. Generate pages for each model
   console.log("\nGenerating pages...");
   for (const model of spec.models) {
     generateListPage(model);
@@ -76,14 +91,14 @@ function main(): void {
     generateFormPages(model);
   }
 
-  // 4. Generate dashboard
+  // 6. Generate dashboard
   generateDashboard(spec);
 
-  // 5. Generate sidebar
+  // 7. Generate sidebar
   console.log("\nGenerating navigation...");
   generateSidebar(spec);
 
-  // 6. Generate seed data (skip for external)
+  // 8. Generate seed data (skip for external)
   if (!isExternal) {
     console.log("\nGenerating seed data...");
     generateSeed(spec);

@@ -187,6 +187,9 @@ ${enumInputs}
       //   const items = db.prepare(sql).all(...params);
       //   const total = db.prepare("SELECT COUNT(*) as count FROM ${lower}s").get().count;
 
+      // eslint-disable-next-line no-console
+      console.warn("⚠ ${lower}.list not implemented — returning empty results. Search for IMPLEMENT: in src/trpc/routers/${lower}.ts");
+
       const items: Array<{
 ${outputFields.join("\n")}
       }> = [];

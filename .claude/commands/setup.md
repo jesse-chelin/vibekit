@@ -30,9 +30,9 @@ Check what's already been done so `/setup` is safe to re-run:
 Run ALL infrastructure setup in a SINGLE bash command. The user should only need to approve ONE tool call for the entire setup phase. Do NOT split these into separate commands.
 
 ```bash
-# Single command that checks prereqs, installs deps, sets up env, and initializes DB
+# Single command that checks prereqs, pre-approves native builds, installs deps, sets up env, and initializes DB
 node -v && pnpm -v && git --version && \
-([ -d node_modules ] || pnpm install) && \
+([ -d node_modules ] || (node -e "const p=require('./package.json'); p.pnpm=p.pnpm||{}; p.pnpm.onlyBuiltDependencies=p.pnpm.onlyBuiltDependencies||[]; if(!p.pnpm.onlyBuiltDependencies.includes('better-sqlite3')){p.pnpm.onlyBuiltDependencies.push('better-sqlite3')} require('fs').writeFileSync('package.json',JSON.stringify(p,null,2)+'\n')" && pnpm install)) && \
 ([ -f .env ] || (AUTH_SECRET=$(openssl rand -base64 32) && printf 'DATABASE_URL="file:./dev.db"\nAUTH_SECRET="%s"\nAUTH_URL="http://localhost:3000"\nNEXT_PUBLIC_APP_URL="http://localhost:3000"\n' "$AUTH_SECRET" > .env && cp .env .env.local)) && \
 ([ -f prisma/dev.db ] || (pnpm db:generate && pnpm db:push && pnpm db:seed))
 ```
@@ -109,18 +109,20 @@ Follow `guided-setup.md` Step 10. Batch aggressively:
    ```
    That's ONE tool approval for the entire generation + verification pipeline.
 3. **Customization pass** — Business logic, skill integration, branding, non-standard pages. Write/edit files for each page in parallel tool calls per message.
-4. **Seed + final verify** — `pnpm db:seed && pnpm build` (ONE command)
+4. **Pre-delivery checklist** — Run the checklist from `guided-setup.md` Step 10f to verify template cleanup, branding, and stub implementation.
+5. **Seed + build verify** — `pnpm db:seed && pnpm build` (ONE command)
+6. **Smoke test** — Start dev server, curl key pages, verify no 500s. See `guided-setup.md` Step 10g-smoke.
+7. **Commit working app** — `git add -A && git commit -m "feat: initial build — [app name]"` (BEFORE docs)
 
 ### Documentation
 
-Generate the documentation vault (`docs/`) and APP.md as described in `guided-setup.md` Step 10h.
+Generate the documentation vault (`docs/`) and APP.md as described in `guided-setup.md` Step 10h. Then commit docs separately.
 
 ### Git + Summary
 
-Initialize git and commit:
+Commit documentation:
 ```bash
-git add -A
-git commit -m "feat: initial vibekit build — [app name]"
+git add -A && git commit -m "docs: add project documentation — [app name]"
 ```
 
 If the user wants to push to GitHub, offer to help with `gh repo create`.

@@ -4,6 +4,27 @@ import { resolvePath, readFile, writeFile, lowerFirst, prismaType } from "./util
 const SCHEMA_PATH = resolvePath("prisma", "schema.prisma");
 const APP_MODELS_MARKER = "// ─── App Models";
 
+/**
+ * Strip template models (Project, Task) and their User relations from schema.prisma.
+ * Called before generating new models — works for both Prisma and external data source modes.
+ */
+export function stripTemplateModels(): void {
+  let schema = readFile(SCHEMA_PATH);
+
+  // Remove everything after the App Models marker (template Project/Task models)
+  const markerIdx = schema.indexOf(APP_MODELS_MARKER);
+  if (markerIdx !== -1) {
+    schema = schema.substring(0, markerIdx);
+  }
+
+  // Remove template relation fields from User model (projects, tasks)
+  const preserveRelations = ["accounts", "sessions"];
+  schema = removeAppUserRelations(schema, preserveRelations);
+
+  writeFile(SCHEMA_PATH, schema);
+  console.log("  ✓ Stripped template Prisma models (Project, Task)");
+}
+
 export function generatePrismaModels(spec: BuildSpec): void {
   let schema = readFile(SCHEMA_PATH);
 

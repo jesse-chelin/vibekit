@@ -12,13 +12,15 @@ Every tool call may require user approval. Excessive approvals destroy the user 
 |-------|--------|-----|
 | State check | 1 | Single bash: check intent.json + APP.md + prereqs |
 | Infrastructure (Steps 1-4) | 1 | Single bash: install + env + db in one command |
-| Domain discovery | 1-2 | ONE Task agent (+ optional parallel WebFetch) |
+| Domain discovery + competitive research | 1-2 | ONE Task agent (+ optional parallel WebSearch) |
 | Interview | 0 | Pure conversation — no tool calls needed |
 | Read guided-setup.md | 1 | One Read call |
 | Write build spec + intent | 2 | Parallel Write calls in one message |
 | Generate + build + commit | 1 | Single chained bash command |
 | Customization pass | ~10-15 | Batch file edits per page, parallel where possible |
 | Documentation | 3-5 | Write multiple docs per message |
+| Pre-delivery checklist | 0 | Pure reads — can verify via grep in one bash call |
+| Smoke test | 1 | Start dev server, curl pages, kill |
 | Final verify + commit | 1 | Single bash command |
 
 **Rules:**
@@ -71,9 +73,9 @@ From the user's description, identify the category and auto-select:
 
 ### 1b. Domain Discovery (external systems)
 
-**If the user mentions an external system, database, API, or local installation** — STOP and investigate BEFORE proposing features. Use a **SINGLE Task agent call** (subagent_type="Explore") to investigate the system thoroughly. If there's also a GitHub URL, launch WebFetch in parallel with the Task agent — same message, one approval. See "Step 1b: Domain Discovery" in the Custom Build Path for the full prompt template.
+**If the user mentions an external system, database, API, or local installation** — STOP and investigate BEFORE proposing features. Use a **SINGLE Task agent call** (subagent_type="Explore") to investigate the system thoroughly. **In the same message**, launch a **WebSearch call** to research competing tools in this space. Two tool calls, one approval — the domain discovery and competitive research happen in parallel.
 
-You cannot propose good features for a system you haven't examined. Invest 2-3 minutes understanding the domain BEFORE proposing what to build.
+You cannot propose good features for a system you haven't examined. Invest 2-3 minutes understanding the domain BEFORE proposing what to build. See "Step 1b: Domain Discovery" and "Step 1c: Competitive Research" in the Custom Build Path for full details.
 
 ### 2. Light validation + auto scope
 
@@ -187,6 +189,47 @@ If the user also provides a GitHub URL, use a parallel WebFetch call alongside t
 - What actions the user might want to take (→ interactive features, not just read-only)
 - What would make this dashboard INDISPENSABLE — the thing that makes the user keep it open all day
 
+**Critical analysis requirements (do ALL three):**
+
+1. **Data absence analysis:** Identify data that does NOT exist — columns that are always null/zero, tables that are empty, data flows that bypass the database (e.g., API responses sent directly without being stored, metrics computed on-the-fly but never persisted). Flag these explicitly so the build plan doesn't include features that depend on data that isn't there.
+
+2. **Data freshness analysis:** Determine how often the data changes:
+   - Real-time (sub-second) → needs SSE/WebSocket or auto-refresh ≤ 5s
+   - Frequent (per-minute) → needs auto-refresh 10-30s
+   - Periodic (hourly/daily) → manual refresh is fine
+   - Static → no refresh needed
+   This determines whether the dashboard needs auto-refresh, polling, SSE, or can be static. **For monitoring/dashboard apps, default to auto-refresh as v1.**
+
+3. **First-run analysis:** What will the dashboard show when the external system has zero or minimal data? Plan for this explicitly — show setup instructions, connection status, or "waiting for data" states instead of empty tables.
+
+#### Step 1c: Competitive Research
+
+After domain discovery, BEFORE proposing features, research what exists in this space. This prevents building something that's obviously inferior to free alternatives.
+
+**Use a SINGLE WebSearch call** (1 approval). If domain discovery uses a Task agent, launch WebSearch in parallel with it — same message, two tools, one approval.
+
+**What to research:**
+- Search for "best [category] tools" or "open source [category] dashboard" (e.g., "best AI agent monitoring tools", "open source home automation dashboard")
+- Identify 3-5 existing tools/platforms in the same space
+- For each: note the **table-stakes features** — what EVERY tool in this category has
+- Identify which table-stakes features are feasible given the external system's data
+
+**How to use the research:**
+- The build plan must include all feasible table-stakes features in v1. If every competing tool has real-time updates and your dashboard doesn't, it's below the baseline.
+- Features that go BEYOND table stakes become the unique angle — propose 1-2 as v1 differentiators.
+- Features that require data you don't have → defer to v2 with a note about what data is needed.
+
+**For dashboard/monitoring/analytics apps specifically:**
+Research existing platforms like Grafana, Datadog, Langfuse, LangSmith, AgentOps, Prometheus/AlertManager, etc. Note what's standard:
+- Real-time or auto-refreshing data
+- Health status indicators (green/yellow/red)
+- Time-range selectors
+- Charts and trend visualization
+- Log/event viewers with search and filtering
+- Alerting and notifications
+
+Save competitive findings to `intent.json` as `competitors` with brief descriptions.
+
 ### Step 2: Idea Validation
 
 Conversational, not a checklist. Adapt based on what the user already said in Step 1. Weave these blocks naturally into the conversation — 2-3 questions per exchange, not all at once.
@@ -266,6 +309,26 @@ Does this split feel right? Move anything between v1 and v2?
 | User-facing models | 3-4 | 5 | "Can any of these be fields on another model instead?" |
 
 **Page bundling:** CRUD for one entity (list + detail + create + edit) counts as 1 feature area, not 4 pages. Dashboard and Settings don't count against the limit.
+
+#### Category-Specific Scope Overrides
+
+**For dashboard/monitoring/analytics/observability apps:**
+
+Some features that might normally be deferred to v2 are actually v1 requirements for monitoring apps. A monitoring dashboard without these is below the baseline:
+
+| Feature | Status | Rationale |
+|---------|--------|-----------|
+| Auto-refresh or real-time updates | **v1 (mandatory)** | A monitoring dashboard without auto-refresh is useless — users will never manually refresh |
+| Health indicators (green/yellow/red) | **v1** | Every monitoring tool has status at a glance |
+| Charts / trend visualization | **v1** (if `charts` skill installed) | Trends over time are table-stakes for any dashboard |
+| Manual refresh button | **v1** | Users need to force-refresh when something changes |
+| "Last updated" timestamp | **v1** | Users need to know how current the data is |
+| Connection status | **v1** | Show whether external DB/API is reachable |
+| Alerting / notifications | v2 | Valuable but not needed for initial monitoring |
+| Historical analysis (>30 days) | v2 | Start with recent data, expand later |
+| Log search with time ranges | v2 (unless core use case) | Useful but complex |
+
+When the competitive research (Step 1c) identifies table-stakes features, ALL feasible ones must be in v1.
 
 #### Skill Justification Required
 
@@ -855,6 +918,17 @@ The generators produce bare CRUD. The customization pass must elevate every page
 - Tab titles that include the page context (e.g., "Pasta Carbonara | RecipeVault")
 - No raw enum values displayed — always `camelToTitle()` or proper labels
 
+**Dashboard for monitoring/observability/external-system apps must ALSO include:**
+- System health indicator — green/yellow/red badge with label ("Online", "Degraded", "Offline") based on data freshness or connectivity
+- Auto-refresh with configurable interval (10s default for monitoring, 60s for analytics) using `setInterval` + `utils.invalidate()`
+- "Last updated" timestamp visible on the dashboard (e.g., "Last updated: 2 min ago")
+- Manual refresh button in the page header
+- Connection status — show whether external DB/API is reachable, with graceful error card if not
+- At least one chart/trend visualization using the `charts` skill (e.g., activity over time, messages per day, errors per hour)
+- Recent activity feed with relative timestamps ("2 min ago", not ISO strings)
+- For each table-stakes feature identified in competitive research: either implement it or explicitly note in the build plan why it was deferred
+- If the external system has error/failure states, surface them prominently — errors are usually the #1 reason someone checks a dashboard
+
 **Page Type Reference** (for any custom pages that need manual creation):
 
 | Page Type | Server `page.tsx` | Client `_components/` | Data Access |
@@ -867,12 +941,80 @@ The generators produce bare CRUD. The customization pass must elevate every page
 
 See `.claude/docs/adding-a-page.md` for complete code patterns per page type.
 
+#### 10f. Pre-Delivery Checklist (MANDATORY)
+
+Before running the final build, verify ALL of these. This catches template leftovers and missing integrations that would embarrass the output. Run a single bash command that checks everything:
+
+```bash
+# Pre-delivery checks — one command, one approval
+echo "=== Pre-Delivery Checklist ===" && \
+echo "1. Logo:" && grep -c "Vibekit" src/components/shared/logo.tsx && echo "  ⚠ Logo still says Vibekit!" || echo "  ✓ Logo is branded" && \
+echo "2. Search command:" && grep -c "/projects" src/components/patterns/search-command.tsx && echo "  ⚠ Search command has template routes!" || echo "  ✓ Search command has correct routes" && \
+echo "3. Root redirect:" && grep -c "redirect" src/app/page.tsx && echo "  ✓ Root redirects to dashboard" || echo "  ⚠ Root page is not a redirect!" && \
+echo "4. Template pages:" && ([ -d src/app/\(app\)/onboarding ] && echo "  ⚠ onboarding/ still exists" || echo "  ✓ No template pages") && \
+echo "5. Prisma models:" && (grep -c "model Project" prisma/schema.prisma 2>/dev/null && echo "  ⚠ Template Project model still in schema!" || echo "  ✓ No template models") && \
+echo "6. IMPLEMENT stubs:" && (grep -rc "IMPLEMENT:" src/trpc/routers/ 2>/dev/null && echo "  ⚠ Unimplemented router stubs found" || echo "  ✓ All stubs implemented or N/A")
+```
+
+| Check | What to verify |
+|-------|----------------|
+| Logo shows app name, not "Vibekit" | `src/components/shared/logo.tsx` shows spec.appName |
+| Search command has correct routes | `src/components/patterns/search-command.tsx` matches sidebar |
+| Root page redirects to `/dashboard` | `src/app/page.tsx` uses `redirect("/dashboard")` |
+| No template pages remain | `onboarding/`, `settings/billing/`, `settings/team/` removed |
+| Prisma schema has no Project/Task models | No `model Project` or `model Task` in schema |
+| All sidebar nav items have working routes | Each sidebar href has a matching `src/app/(app)/` directory |
+| For external apps: `// IMPLEMENT:` stubs filled in | `grep -r "IMPLEMENT:" src/trpc/routers/` returns nothing |
+| For external apps: EXTERNAL_DB_PATH correct in .env | Path points to an existing file |
+
+If ANY check fails, fix it before proceeding. The generators should handle most of these (logo, search command, root redirect, template cleanup), but verify anyway.
+
 #### 10g. Seed and Verify (ONE command)
 ```bash
 pnpm db:push && pnpm db:seed && pnpm build
 ```
 
 **Verify**: Build passes with zero errors. If it fails, fix and re-run. Do NOT skip the build check.
+
+#### 10g-smoke. Runtime Smoke Test (MANDATORY)
+
+After `pnpm build` passes, verify the app actually works at runtime. A passing build does NOT guarantee the app works — serialization errors, missing imports, and auth issues only surface at runtime.
+
+```bash
+# Start dev server in background, wait for ready, test key pages
+timeout 30 bash -c 'pnpm dev &
+DEV_PID=$!
+sleep 8
+ROOT=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 2>/dev/null)
+DASH=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/dashboard 2>/dev/null)
+echo "Root: $ROOT (expect 200 or 302/307)"
+echo "Dashboard: $DASH (expect 200 or 302/307)"
+kill $DEV_PID 2>/dev/null
+wait $DEV_PID 2>/dev/null
+if [[ "$ROOT" =~ ^(200|302|307)$ ]] && [[ "$DASH" =~ ^(200|302|307)$ ]]; then
+  echo "✓ Smoke test passed"
+else
+  echo "✗ Smoke test FAILED — fix before proceeding"
+  exit 1
+fi'
+```
+
+If any page returns 500 or the server doesn't start:
+1. Check the terminal output for the specific error
+2. Fix the issue (common: serialization errors from server/client boundary violations, missing env vars)
+3. Re-run `pnpm build` and the smoke test
+
+**The user should NEVER see an error on first load.** This is the Zero-Troubleshooting Rule.
+
+#### 10g-commit. Commit Working App
+
+After the smoke test passes, commit the working app before writing documentation:
+
+```bash
+git add -A && git commit -m "feat: initial build — [app name]"
+```
+
+This creates a save point. If documentation generation somehow breaks things (unlikely but possible), the working app is preserved.
 
 #### 10h. Generate Documentation Vault
 
@@ -1129,11 +1271,9 @@ Full project documentation is in the `docs/` Obsidian vault. Open it in Obsidian
 #### 10i. Deployment (if applicable)
 If a deploy skill was installed, walk through setup step by step. Each deployment skill's SKILL.md has its own guided setup.
 
-#### 10j. Initialize git and make the first commit
+#### 10j. Final commit with documentation
 ```bash
-git init
-git add .
-git commit -m "feat: initial vibekit build — [app name]"
+git add -A && git commit -m "docs: add project documentation — [app name]"
 ```
 
 If the user wants to push to GitHub:

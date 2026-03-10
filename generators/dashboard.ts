@@ -129,8 +129,8 @@ ${statCards.join("\n")}
               <EmptyState
                 icon={${recentIcon}}
                 title="No ${recentLabel.toLowerCase()} yet"
-                description="Create your first ${recentLabelSingular.toLowerCase()} to get started."
-                action={{ label: "New ${recentLabelSingular}", href: "/${recentSlug}/new" }}
+                description="${(recentModel?.readOnly ?? false) ? `${recentLabel} will appear here once data is available.` : `Create your first ${recentLabelSingular.toLowerCase()} to get started.`}"${(recentModel?.readOnly ?? false) ? "" : `
+                action={{ label: "New ${recentLabelSingular}", href: "/${recentSlug}/new" }}`}
                 className="min-h-[200px]"
               />
             ) : (

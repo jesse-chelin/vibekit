@@ -248,6 +248,7 @@ When connecting to external databases (e.g., reading another app's SQLite DB):
 - **Type everything:** Create TypeScript interfaces for all external data shapes. Don't use `any`.
 - **Wrap in tRPC routers:** Even for external data, create tRPC routers so the frontend uses the same `trpc.x.useQuery()` pattern. Don't bypass the data flow.
 - **Connection pooling:** For `better-sqlite3`, open the connection once at module level and reuse it. Don't open/close per request.
+- **Monitoring dashboards require real-time:** If the app is a monitoring/observability/analytics dashboard, auto-refresh or real-time updates are v1 requirements, not v2. A monitoring dashboard without auto-refresh is useless. Include health indicators, refresh timestamps, and at least one chart/trend visualization.
 
 ## File Conventions
 
