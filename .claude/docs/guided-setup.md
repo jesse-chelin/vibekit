@@ -721,13 +721,62 @@ This creates a save point. The generators produced all standard CRUD pages. If t
 
 #### 10e. LLM Customization Pass
 
-The generators produce the standard 80%. This step handles the 20% that's unique:
+The generators produce functional CRUD scaffolding. This step elevates it from "works" to "impresses." The user's expectation is that the output EXCEEDS what they imagined — not that they have to troubleshoot or feel underwhelmed. Spend real effort here.
+
+##### What to customize:
 
 - **Business logic** — Custom validation rules, computed fields, non-standard workflows
 - **Skill integration** — Wire skill-specific features into generated pages (e.g., file upload fields, chart components)
 - **Branding** — Apply the user's chosen vibe palette to `globals.css`
 - **Non-standard pages** — Any pages that don't follow the standard CRUD pattern
 - **Landing page** — If `needsLandingPage` is true, customize the landing page content
+- **Polish and richness** — See Feature Richness Checklist below
+
+##### Feature Richness Checklist (MANDATORY)
+
+The generators produce bare CRUD. The customization pass must elevate every page. Go through each category and add what's relevant:
+
+**Dashboard must feel alive and useful:**
+- Stat cards with colored icons, trends or context (not just raw numbers — add "↑ 3 this week" or "12 pending")
+- Recent activity showing the 5 most recent items with key details, relative timestamps ("2 hours ago"), and status badges
+- Quick action buttons (create new item, go to most urgent item)
+- First-run experience: when the user has zero data, show a "Getting Started" card with 3-4 setup steps and progress indicators instead of empty stat cards showing all zeros
+- If the app has status/priority fields, show a breakdown (e.g., "4 pending, 2 in progress, 1 completed")
+- Use `StaggerList` animation on the stat cards grid
+
+**List pages must feel powerful, not like a basic table:**
+- Working search that filters by relevant text fields (not just exact match — case-insensitive contains)
+- Status/priority/category badges with distinct colors (use `enumColorMap` pattern)
+- Relative timestamps for dates ("2 hours ago", "Yesterday", not raw ISO strings)
+- Row click navigates to detail page (not just an actions dropdown)
+- Sort indicators on clickable column headers
+- Pagination that shows "Showing 1-10 of 47"
+- Bulk select + bulk actions where it makes sense (e.g., mark multiple tasks complete)
+- Filter tabs or dropdown for enum fields (e.g., "All | Pending | Completed")
+
+**Detail pages must feel comprehensive:**
+- Organize content in clear sections, not just a dump of all fields
+- Related items displayed inline (if model has `hasMany` relations, show a mini-list of children)
+- Metadata footer: "Created 3 days ago · Updated 2 hours ago"
+- Edit and Delete buttons prominently placed in the header
+- Breadcrumb trail: Dashboard > Recipes > Pasta Carbonara
+- If there's a description/notes field, render it with proper typography (not crammed into a badge)
+
+**Forms must feel thoughtful:**
+- Smart defaults that reduce typing (today's date for date fields, "pending" for status)
+- Field descriptions/hints for non-obvious fields (gray helper text below the input)
+- Proper field types: date picker for dates, number input for numbers, textarea for long text, select for enums
+- Character count indicator for text fields with maxLength
+- Inline validation — show errors immediately when the user leaves a field, not just on submit
+- Cancel button returns to where the user came from (router.back())
+
+**Overall polish that makes the app feel professional:**
+- Page transitions using `FadeIn`/`SlideUp` from `motion.tsx`
+- Toast notifications for ALL mutations (create, update, delete) with descriptive messages
+- Confirmation dialogs for destructive actions (delete) with the item name in the message
+- Consistent use of the chosen vibe's color palette on interactive elements
+- Tab titles that include the page context (e.g., "Pasta Carbonara | RecipeVault")
+- No raw enum values displayed — always `camelToTitle()` or proper labels
 
 **Page Type Reference** (for any custom pages that need manual creation):
 
@@ -1009,6 +1058,70 @@ If the user wants to push to GitHub:
 gh repo create [app-name] --private --source=. --push
 ```
 
+### Non-Standard Apps
+
+Not every app fits the standard CRUD pattern. If the user describes something that doesn't map cleanly to "create/read/update/delete entities" — such as a monitoring dashboard, an external database viewer, a tool that wraps an existing API, or a read-only analytics app — the generators may not apply. Adapt the build flow:
+
+#### When to skip generators
+
+Skip `10b` (generators) when:
+- The app reads from an external database instead of its own Prisma DB
+- The app is primarily a dashboard/viewer with no create/edit flows
+- The data model doesn't map to standard user-owned entities
+- The app wraps an external API or service
+
+#### External database apps
+
+When the app needs to read from an external database (another app's SQLite, Postgres, etc.):
+
+**Setup:**
+- Install `better-sqlite3` (for SQLite) or the appropriate client package
+- Create a connection module in `src/lib/` that opens the connection ONCE at module level
+- **CRITICAL:** If the connection is read-only, do NOT set WAL pragma or any write-mode pragma. `db.pragma("journal_mode = WAL")` will throw `SQLITE_READONLY` on a read-only connection.
+- Create TypeScript interfaces for every table/view being read
+- Handle the case where the external DB file doesn't exist — return a clear error, don't crash
+
+**Data flow — still use tRPC:**
+- Create tRPC routers that wrap external DB queries
+- The frontend uses `trpc.x.useQuery()` just like any other page
+- This keeps the HydrateClient/prefetch patterns working
+- Add proper error handling for connection failures
+
+**Read-only SQLite pattern:**
+```typescript
+import Database from "better-sqlite3";
+import { existsSync } from "fs";
+
+const DB_PATH = process.env.EXTERNAL_DB_PATH || "/path/to/external.db";
+
+function getDb(): Database.Database | null {
+  if (!existsSync(DB_PATH)) return null;
+  return new Database(DB_PATH, { readonly: true });
+  // NO pragma("journal_mode = WAL") — read-only!
+}
+```
+
+#### Dashboard-focused apps
+
+For apps that are primarily dashboards (monitoring, analytics, status views):
+- Make the dashboard the primary page — it should be information-dense and immediately useful
+- Use cards, grids, and tables to display data compactly
+- Include refresh buttons or auto-refresh for real-time data
+- Group related metrics with clear section headers
+- Use the `charts` skill if data visualization adds value
+- Add drill-down: clicking a metric should navigate to a detailed view
+
+#### Quality bar for non-standard apps
+
+Even when skipping generators, maintain the SAME quality bar:
+- Every page needs `loading.tsx` with layout-matching skeletons
+- Every data view needs an empty state and error state
+- Use the same component library (shadcn/ui, PageHeader, EmptyState, etc.)
+- Follow the same spacing rules (`p-4 md:p-6`, `space-y-6`)
+- Use the HydrateClient pattern for pages with client interactivity
+- Apply the chosen vibe palette
+- **All the Feature Richness Checklist items from Step 10e still apply**
+
 ### Programmatic Verification (run before the manual checklist)
 
 After the build passes, run these automated checks:
@@ -1111,3 +1224,8 @@ These are the mistakes people actually make. Avoid them:
 8. **Hover-only interactions** — Tooltips, dropdowns, actions only visible on hover. Mobile users can't hover.
 9. **Building without a plan** — Jumping straight to code without confirming models, pages, and skills leads to rework. Always present the plan first.
 10. **Skipping verification checkpoints** — "It probably works" is not verification. Run the build, check the states, test the flow.
+11. **Passing functions across server/client boundary** — Lucide icons are React components (functions). You CANNOT pass them as props from a server component to a client component — Next.js will throw "Functions cannot be passed directly to Client Components." Fix: (a) use HydrateClient pattern so the client component renders everything including icons, (b) pass icon names as strings and map to components in the client, or (c) import icons directly in the client component. See CLAUDE.md "Server/Client Boundary" section.
+12. **WAL pragma on read-only databases** — If connecting to an external SQLite database with `{ readonly: true }`, do NOT call `db.pragma("journal_mode = WAL")` or any write-mode pragma. It will throw `SQLITE_READONLY`. Skip all write pragmas for read-only connections entirely.
+13. **Interactive CLI tools during build** — Commands like `pnpm approve-builds` show interactive TUIs that Claude Code cannot drive. Always check for `--yes` or `--non-interactive` flags. If none exist, warn the user and let them run it manually.
+14. **Bare minimum output** — Building functional-but-sparse pages is not enough. Users expect to be IMPRESSED, not just unblocked. A dashboard with four zero-value stat cards and an empty recent list is disappointing. Add first-run guidance, smart defaults, contextual help, and polish. See the Feature Richness Checklist in Step 10e.
+15. **Excessive codebase exploration** — Don't spend 50+ tool calls reading every file in the repo before starting to build. Read CLAUDE.md, APP.md, and the specific files you need. The documentation is designed to give you everything you need without reading every source file.

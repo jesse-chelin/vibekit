@@ -13,6 +13,10 @@ Vibekit exists to produce **production-quality apps, not demos**. The #1 critici
 
 The measure of quality is not "does the demo look good?" — it's "would you trust this app with real data, real users, and real money?"
 
+**The Zero-Troubleshooting Rule:** The user should NEVER have to fix bugs after `/setup` completes. If `pnpm build` passes, the app must work — no runtime errors, no serialization failures, no missing imports. If you're unsure whether something works, test it (run `pnpm build`). The user's first impression is everything. A 5-minute troubleshooting session destroys trust that took 20 minutes of smooth building to create.
+
+**The Wow Rule:** The output should exceed the user's expectations, not merely meet them. A dashboard with four zero-value stat cards is technically correct but emotionally disappointing. Add first-run guidance, contextual help, smart defaults, and visual polish. The user should open the app and think "this is better than I imagined" — not "I guess this works."
+
 ## Session Start
 
 Every time you open this project, do this first:
@@ -192,6 +196,55 @@ await utils.task.list.invalidate();  // if tasks are affected too
 ```
 If the mutation affects counts or stats shown elsewhere (dashboard, sidebar badges), invalidate those too. Think about what data appears on OTHER pages, not just the current one.
 
+### Server/Client Boundary (CRITICAL)
+
+Next.js server components CANNOT pass non-serializable values to client components. This includes:
+- **Functions** (including React components like Lucide icons)
+- **Classes, Symbols, Maps, Sets**
+- **Any value that can't be JSON.stringify'd**
+
+Violations cause runtime errors like "Functions cannot be passed directly to Client Components" or silent failures.
+
+**Lucide icons — the #1 boundary violation:**
+```tsx
+// WRONG — icon is a function, can't cross the boundary
+export default async function ServerPage() {
+  return <ClientDashboard icon={CheckSquare} />;  // ← WILL FAIL
+}
+
+// RIGHT — import the icon inside the client component
+"use client";
+import { CheckSquare } from "lucide-react";
+export function ClientDashboard() {
+  return <CheckSquare className="h-4 w-4" />;  // ← works
+}
+
+// RIGHT — pass icon name as string, map in the client component
+// Server:
+<ClientCard iconName="CheckSquare" />
+// Client:
+const icons: Record<string, LucideIcon> = { CheckSquare, Home, Receipt };
+const Icon = icons[iconName];
+
+// RIGHT — use HydrateClient pattern (server prefetches data, client renders everything)
+export default async function Page() {
+  void trpc.entity.list.prefetch({});
+  return <HydrateClient><ClientDashboard /></HydrateClient>;
+}
+```
+
+**Rule of thumb:** If a page needs Lucide icons AND interactive state (queries, mutations, click handlers), use the HydrateClient pattern. The server component only prefetches data; the client component handles all rendering including icons.
+
+### External Database Connections (CRITICAL)
+
+When connecting to external databases (e.g., reading another app's SQLite DB):
+
+- **Read-only connections:** Open with `{ readonly: true }` and do NOT set any write-mode pragmas. `pragma("journal_mode = WAL")` WILL FAIL on read-only connections with `SQLITE_READONLY`.
+- **Always handle missing databases:** The external DB file might not exist — check for it and return a graceful error, not a crash.
+- **Type everything:** Create TypeScript interfaces for all external data shapes. Don't use `any`.
+- **Wrap in tRPC routers:** Even for external data, create tRPC routers so the frontend uses the same `trpc.x.useQuery()` pattern. Don't bypass the data flow.
+- **Connection pooling:** For `better-sqlite3`, open the connection once at module level and reuse it. Don't open/close per request.
+
 ## File Conventions
 
 - Pages: `src/app/(group)/route/page.tsx`
@@ -365,6 +418,9 @@ Page padding is ALWAYS `p-4 md:p-6`. Every page. No exceptions. This single rule
 - DO NOT return raw arrays from `list` procedures — always return `{ items, total, page, pageSize, totalPages }`. Page templates access `data.items`.
 - DO NOT omit `export const dynamic = "force-dynamic"` on pages using `caller` or `trpc.prefetch()` — the build will fail because auth context isn't available at static generation time
 - DO NOT begin code generation until the user has explicitly approved the build plan (Step 9 of guided-setup.md). Present the full manifest — models, routers, pages, skills, deferred features — and wait for approval. If the user requests changes, update and re-present.
+- DO NOT pass React components (functions) as props from server to client components — Lucide icons, custom components, or any function cannot cross the server/client boundary. See "Server/Client Boundary" section above.
+- DO NOT set WAL pragma or any write-mode pragma on read-only database connections — `pragma("journal_mode = WAL")` throws SQLITE_READONLY. Skip all write pragmas when `readonly: true`.
+- DO NOT use interactive CLI tools (TUIs with prompts/menus) during automated builds — always use `--yes`, `--non-interactive`, or pipe responses. If no non-interactive flag exists, document the manual step for the user.
 
 ## Interactive State Guidelines
 
