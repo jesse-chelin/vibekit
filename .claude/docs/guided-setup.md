@@ -3,6 +3,30 @@
 When a user opens this repo and wants to build an app, follow this interview flow.
 Speak in plain language. No jargon. Translate human intent into technical decisions.
 
+## Tool Call Budget (CRITICAL)
+
+Every tool call may require user approval. Excessive approvals destroy the user experience. The entire `/setup` flow — from fresh clone to running app — must use **fewer than 25 tool approvals** before the customization pass.
+
+**Approval budget breakdown:**
+| Phase | Target | How |
+|-------|--------|-----|
+| State check | 1 | Single bash: check intent.json + APP.md + prereqs |
+| Infrastructure (Steps 1-4) | 1 | Single bash: install + env + db in one command |
+| Domain discovery | 1-2 | ONE Task agent (+ optional parallel WebFetch) |
+| Interview | 0 | Pure conversation — no tool calls needed |
+| Read guided-setup.md | 1 | One Read call |
+| Write build spec + intent | 2 | Parallel Write calls in one message |
+| Generate + build + commit | 1 | Single chained bash command |
+| Customization pass | ~10-15 | Batch file edits per page, parallel where possible |
+| Documentation | 3-5 | Write multiple docs per message |
+| Final verify + commit | 1 | Single bash command |
+
+**Rules:**
+- NEVER run a preliminary command (ls, sqlite3, etc.) before launching a Task agent that does the same thing. Just put it in the agent prompt.
+- NEVER split `pnpm db:push` and `pnpm build` into separate commands. Chain with `&&`.
+- NEVER create files one at a time when you can write 2-4 in parallel.
+- During the customization pass, write ALL files for a single page (page.tsx, loading.tsx, _components/) as parallel tool calls in one message, then move to the next page.
+
 ---
 
 ## Step 0: Context Check
@@ -47,9 +71,9 @@ From the user's description, identify the category and auto-select:
 
 ### 1b. Domain Discovery (external systems)
 
-**If the user mentions an external system, database, API, or local installation** — STOP and investigate BEFORE proposing features. See "Step 1b: Domain Discovery" in the Custom Build Path for full details. This applies to Quick Start too. You cannot propose good features for a system you haven't examined.
+**If the user mentions an external system, database, API, or local installation** — STOP and investigate BEFORE proposing features. Use a **SINGLE Task agent call** (subagent_type="Explore") to investigate the system thoroughly. If there's also a GitHub URL, launch WebFetch in parallel with the Task agent — same message, one approval. See "Step 1b: Domain Discovery" in the Custom Build Path for the full prompt template.
 
-Read the external system's repo/README, database schema, and available data. Understand what entities exist, what data changes frequently, and what would make this dashboard indispensable. This takes 2-3 minutes and prevents building something technically correct but functionally useless.
+You cannot propose good features for a system you haven't examined. Invest 2-3 minutes understanding the domain BEFORE proposing what to build.
 
 ### 2. Light validation + auto scope
 
@@ -140,21 +164,19 @@ Do NOT ask "who is it for?" here — that's covered in depth in Step 2.
 
 If the user mentions an external system, API, database, or existing tool they want to build on top of (e.g., "a dashboard for NanoClaw", "an interface for my home automation", "a viewer for my media server"), you MUST investigate it BEFORE proposing features.
 
-**If the user provides a GitHub URL or repo path:**
-- Read the README to understand what the system does
-- Look at the database schema (look for `.sql` files, migration files, `schema.prisma`, SQLite databases, or ORM model definitions)
-- Check what data is available — tables, columns, relationships
-- Understand the system's core concepts (what entities exist, what actions are possible)
+**CRITICAL: Use a SINGLE Task agent call for all domain discovery.** Do NOT run preliminary `ls` or `sqlite3` commands first, then launch a separate Explore agent. That's 2+ approvals when it should be 1. Launch ONE Task agent (subagent_type="Explore") with a thorough prompt that covers everything you need to learn. The agent runs autonomously — the user approves once and gets the complete picture back.
 
-**If the user provides a local installation path:**
-- Look for database files (`.db`, `.sqlite`, `.sqlite3`)
-- If found, open with `sqlite3 <path> ".schema"` or `sqlite3 <path> ".tables"` to discover the full schema
-- Look for config files that reveal the system's structure
-- Check for log files that reveal what the system does at runtime
+Example Task prompt for domain discovery:
+```
+Thoroughly explore [system] at [path]. I need to build a dashboard for it.
+1. Read the README and key source files to understand what it does
+2. Find all database files (.db, .sqlite) and run sqlite3 ".schema" on each
+3. Check data directories, config files, and log files
+4. Report: all database tables with columns, data file locations, key data structures,
+   what data changes frequently, and what would be most useful in a dashboard.
+```
 
-**If the user provides an API:**
-- Check for API docs, OpenAPI/Swagger specs
-- Understand available endpoints and data shapes
+If the user also provides a GitHub URL, use a parallel WebFetch call alongside the Task agent — both in the same message, one approval total.
 
 **WHY THIS MATTERS:** You cannot build a good dashboard for something you don't understand. A messaging system has BOTH inbound and outbound messages — if you only show one direction, the dashboard is useless. A task scheduler has inputs, outputs, run history, and failure states — showing just a list of task names misses the point. Invest 2-3 minutes understanding the domain BEFORE proposing what to build. This prevents building something technically correct but functionally useless.
 
@@ -748,45 +770,30 @@ When the app connects to an **external database** (e.g., another app's SQLite DB
 - No form pages generated (no create/edit routes)
 - Routers only have `list` and `byId` procedures (no create/update/delete)
 
-#### 10b. Run Code Generators
+#### 10b–10d. Generate, Install Skills, Push, and Verify (ONE command)
+
+**CRITICAL: Run this entire pipeline as a SINGLE bash command.** This is one user approval, not four.
 
 ```bash
-npx tsx generators/compose.ts
-```
-
-This produces ALL standard files in seconds:
-- Prisma models (appended to `schema.prisma`)
-- tRPC routers (5 procedures each: list, byId, create, update, delete)
-- List pages (server + client component + loading skeleton)
-- Detail pages (sidebar + content + loading skeleton + delete button)
-- Form pages (create + edit + loading skeletons)
-- Dashboard (stat cards + recent entity)
-- Sidebar navigation
-- Seed data
-
-**Verify**: Generator completes without errors.
-
-#### 10c. Install Skills
-
-```bash
-npx tsx skills-engine/index.ts apply <name>
-```
-**Verify**: Each skill installs without errors. If a skill fails, diagnose and fix before continuing — don't skip it and hope for the best.
-
-#### 10d. Push Database + Verify Generated Code
-
-```bash
-pnpm db:push
-pnpm build
-```
-
-**Verify**: Both commands succeed. If the build fails, fix the issue (likely a generator bug or skill conflict) and re-run. Catch errors early — do NOT proceed with a broken build.
-
-#### 10d-checkpoint. Commit: generated scaffolding
-```bash
+npx tsx generators/compose.ts && \
+npx tsx skills-engine/index.ts apply <skill1> && \
+npx tsx skills-engine/index.ts apply <skill2> && \
+pnpm db:push && \
+pnpm build && \
 git add -A && git commit -m "feat: add generated scaffolding"
 ```
-This creates a save point. The generators produced all standard CRUD pages. If the customization pass introduces issues, you can revert to this.
+
+What the generators produce:
+- Prisma models (appended to `schema.prisma`) — or external router stubs if `dataSource: "external"`
+- tRPC routers (5 procedures each, or 2 for read-only models)
+- List pages (server + client component + loading skeleton)
+- Detail pages (sidebar + content + loading skeleton + delete button)
+- Form pages (create + edit + loading skeletons) — skipped for read-only models
+- Dashboard (stat cards + recent entity)
+- Sidebar navigation
+- Seed data — skipped for external data sources
+
+**Verify**: The entire pipeline must complete without errors. If anything fails, fix and re-run the failing step individually. The git commit creates a save point — if the customization pass introduces issues, you can revert to this.
 
 #### 10e. LLM Customization Pass
 
@@ -860,10 +867,9 @@ The generators produce bare CRUD. The customization pass must elevate every page
 
 See `.claude/docs/adding-a-page.md` for complete code patterns per page type.
 
-#### 10g. Seed and Verify
+#### 10g. Seed and Verify (ONE command)
 ```bash
-pnpm db:push && pnpm db:seed
-pnpm build
+pnpm db:push && pnpm db:seed && pnpm build
 ```
 
 **Verify**: Build passes with zero errors. If it fails, fix and re-run. Do NOT skip the build check.

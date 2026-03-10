@@ -25,30 +25,26 @@ Check what's already been done so `/setup` is safe to re-run:
    - `.env` exists → skip environment setup
    - `prisma/dev.db` exists → skip database setup
 
-### Steps 1–4: Project Setup (do all of this before talking to the user)
+### Steps 1–4: Project Setup (ONE bash command — minimize approvals)
 
-Run these silently and efficiently. Only talk to the user if something fails.
+Run ALL infrastructure setup in a SINGLE bash command. The user should only need to approve ONE tool call for the entire setup phase. Do NOT split these into separate commands.
 
-1. **Prerequisites** — Run `node -v`, `pnpm -v`, `git --version` in a single bash command.
-   - If ANY are missing, list everything needed in one message and **stop**.
-   - If Node.js is below v18, tell them to upgrade and stop.
+```bash
+# Single command that checks prereqs, installs deps, sets up env, and initializes DB
+node -v && pnpm -v && git --version && \
+([ -d node_modules ] || pnpm install) && \
+([ -f .env ] || (AUTH_SECRET=$(openssl rand -base64 32) && printf 'DATABASE_URL="file:./dev.db"\nAUTH_SECRET="%s"\nAUTH_URL="http://localhost:3000"\nNEXT_PUBLIC_APP_URL="http://localhost:3000"\n' "$AUTH_SECRET" > .env && cp .env .env.local)) && \
+([ -f prisma/dev.db ] || (pnpm db:generate && pnpm db:push && pnpm db:seed))
+```
 
-2. **Dependencies** — If `node_modules/` doesn't exist, run `pnpm install`.
+If ANY prerequisite is missing, the command fails fast and shows what's needed. If any step was already done, it skips silently.
 
-3. **Environment** — If `.env` doesn't exist:
-   - Run `openssl rand -base64 32` to generate AUTH_SECRET
-   - Write `.env` with DATABASE_URL, AUTH_SECRET, AUTH_URL, NEXT_PUBLIC_APP_URL
-   - Copy `.env` to `.env.local` (Prisma reads `.env`, Next.js reads `.env.local`)
-
-4. **Database** — If `prisma/dev.db` doesn't exist, run `pnpm db:generate && pnpm db:push && pnpm db:seed`.
-
-Once all 4 steps complete successfully, give the user a single brief status update:
+Once complete, give the user a single brief status update:
 
 "All set up — Node [version], dependencies installed, database ready.
 
 Now let's figure out what to build. Tell me about the app you want — what does it do, and who is it for? You can be as brief or detailed as you like."
 
-If any step was already done (e.g. node_modules exists), skip it silently.
 If any step fails, stop immediately, show the error clearly, and suggest a fix.
 
 Now read `.claude/docs/guided-setup.md` and follow the interview flow starting from **Step 0b** (Quick Start vs Custom Build). Key points:
@@ -58,6 +54,18 @@ Now read `.claude/docs/guided-setup.md` and follow the interview flow starting f
 - If they give detailed requirements or ask questions, take the Custom Build path — validate the idea (Step 2), define MVP scope (Step 3), then go step by step with checkpoints through Steps 4-8.
 - At every checkpoint, present a summary and wait for approval before continuing.
 - **Build Plan Approval (Step 9) is mandatory.** Present the full build manifest and get explicit user approval before generating any code.
+
+### CRITICAL: Minimize Tool Calls (Approval Fatigue)
+
+Every tool call may require user approval. Excessive tool calls ruin the experience. Follow these rules:
+
+1. **Batch shell commands aggressively.** Never run 3 commands that could be 1. Use `&&` to chain. Steps 1-4 must be ONE command.
+2. **Use Task agents for multi-step research.** Domain discovery (exploring an external system) should be a SINGLE Task agent call, not a preliminary `ls` followed by a separate Explore agent. The agent runs autonomously — one approval instead of dozens.
+3. **Write files in parallel.** When creating multiple files (build spec, intent.json, documentation), use parallel tool calls in a single message.
+4. **Combine build steps.** `npx tsx generators/compose.ts && pnpm db:push && pnpm build` is ONE approval, not three.
+5. **During the customization pass** (Step 10e), write/edit all files for a single page in one message with parallel tool calls, then move to the next page. Don't interleave reads and writes across pages.
+
+**Target: The entire `/setup` flow — from fresh clone to running app — should require fewer than 25 tool approvals.** Count every Bash, Read, Write, Edit, Task, and Fetch call. If you're approaching 25 and haven't started the customization pass, you're doing too many individual calls.
 
 ### After the Interview: Save Intent
 
@@ -87,16 +95,21 @@ After the interview is complete and the user has approved the build plan (Step 9
 }
 ```
 
-### Build
+### Build (minimize tool calls — batch everything)
 
-Follow `guided-setup.md` Step 10 exactly:
+Follow `guided-setup.md` Step 10. Batch aggressively:
 
-1. **Compile build spec** — Write `.vibekit/build-spec.json` from intent.json (see `generators/types.ts` for schema)
-2. **Run generators** — `npx tsx generators/compose.ts` produces all standard files (Prisma models, tRPC routers, pages, dashboard, sidebar, seed data)
-3. **Install skills** — `npx tsx skills-engine/index.ts apply <name>`
-4. **Push + verify** — `pnpm db:push && pnpm build`
-5. **Customization pass** — Business logic, skill integration, branding, non-standard pages
-6. **Seed + final verify** — `pnpm db:seed && pnpm build`
+1. **Write build spec + intent.json** — Write both `.vibekit/build-spec.json` and `.vibekit/intent.json` as parallel Write calls in a single message.
+2. **Run generators + skills + push + verify** — Chain into as few bash commands as possible:
+   ```bash
+   npx tsx generators/compose.ts && \
+   npx tsx skills-engine/index.ts apply skill1 && \
+   npx tsx skills-engine/index.ts apply skill2 && \
+   pnpm db:push && pnpm build
+   ```
+   That's ONE tool approval for the entire generation + verification pipeline.
+3. **Customization pass** — Business logic, skill integration, branding, non-standard pages. Write/edit files for each page in parallel tool calls per message.
+4. **Seed + final verify** — `pnpm db:seed && pnpm build` (ONE command)
 
 ### Documentation
 
