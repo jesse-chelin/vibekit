@@ -102,17 +102,25 @@ claude
 /setup
 ```
 
-That's it. Claude will:
-- Check your prerequisites (Node.js, pnpm, git)
-- Install dependencies and set up the database
-- Ask you what you want to build — just describe it in plain English
-- Validate your idea, challenge assumptions, and scope the MVP
-- Present a build plan for approval before writing any code
-- Compile a build spec and run code generators to produce all standard scaffolding in seconds
-- Customize with business logic, skill integration, and branding
-- Set up documentation so future sessions always know the current state
+That's it. Claude silently handles all infrastructure (prerequisites, dependencies, environment, database) and then asks you one question: **"What do you want to build?"**
+
+You have two paths:
+
+**Quick Start** — Describe your app in one sentence. Claude infers the category, selects skills, designs the data model, and presents a build plan. You approve, and it builds.
+
+> *"A recipe manager where I can save, tag, and search my family recipes"*
+
+**Custom Build** — Go step by step. Claude interviews you about your target user, validates the idea, scopes the MVP (hard limits: 5 features, 7 pages, 3 skills), plans the data model, picks a design vibe, and presents everything for approval before writing a single line of code.
+
+Either way, after you approve the build plan, Claude:
+1. Compiles a build spec and runs code generators (models, routers, pages, dashboard, sidebar — all in seconds)
+2. Installs selected skills (payments, charts, AI, etc.)
+3. Customizes with business logic, branding, and polish
+4. Verifies the build, seeds demo data, writes documentation, and commits
 
 When it's done, run `pnpm dev` to see your app at **http://localhost:3000**.
+
+`/setup` is safe to re-run — it detects what's already done and skips completed steps. If a previous build was interrupted, it offers to resume.
 
 ### Step 4: Keep building
 
@@ -181,6 +189,7 @@ npx tsx generators/compose.ts .vibekit/build-spec.json
 |-----------|--------|
 | `prisma-model.ts` | Prisma models with relations, indexes, User relations |
 | `trpc-router.ts` | 5-procedure routers (list, byId, create, update, delete) + registration |
+| `trpc-router-external.ts` | Routers for external data sources (stub queries + connection module) |
 | `list-page.ts` | Server page + client DataTable component + loading skeleton |
 | `detail-page.ts` | Detail page with sidebar + content + delete button |
 | `form-page.ts` | Create + edit pages with Zod validation + loading skeletons |
@@ -189,6 +198,8 @@ npx tsx generators/compose.ts .vibekit/build-spec.json
 | `seed.ts` | Realistic seed data |
 
 The build spec schema is defined in `generators/types.ts`. Generators are idempotent — safe to re-run.
+
+**External data sources:** Set `"dataSource": "external"` in the build spec to generate routers with stub query bodies instead of Prisma calls — useful for dashboards that read from another app's database. Set `"readOnly": true` on models to skip create/edit/delete UI entirely.
 
 ---
 
