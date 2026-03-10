@@ -347,10 +347,12 @@ Track token/time usage during builds:
 | **P1** | ~~2.2 Structured intent + build plan approval~~ | ~~Captures validation context, presents plan before generating~~ | ✅ Done (2026-03-08) |
 | **P1** | ~~2.4 Scope gating~~ | ~~Prevents v1 bloat~~ | ✅ Done (2026-03-08) |
 | **P1** | ~~Code generators (script-based scaffolding)~~ | ~~80% of build produced by generators, not LLM~~ | ✅ Done (2026-03-09) |
-| **P1** | 2.5 Documentation vault generation | Structured Obsidian vault with PRDs, ADRs, feature specs | Medium |
+| **P1** | ~~2.3 Market research during interview~~ | ~~Informed decisions~~ | ✅ Done (2026-03-10) |
+| **P1** | ~~2.5 Documentation vault generation~~ | ~~Structured Obsidian vault with PRDs, ADRs, feature specs~~ | ✅ Done (2026-03-08) |
+| **P1** | ~~Template cleanup & branding automation~~ | ~~Logo, search command, root redirect auto-generated~~ | ✅ Done (2026-03-10) |
+| **P1** | ~~Pre-delivery verification pipeline~~ | ~~Checklist + smoke test before user sees app~~ | ✅ Done (2026-03-10) |
 | **P1** | 3.1 Dynamic landing page | No more copy-paste templates | Medium |
 | **P1** | 3.3 Dynamic seed data | First experience feels real | Small |
-| **P2** | 2.3 Market research during interview | Informed decisions | Medium |
 | **P2** | 3.2 Dynamic onboarding | App-specific first run | Medium |
 | **P2** | 4.1 Smarter /add-feature | Ongoing build quality | Medium |
 | **P2** | 4.4 User flow mapping | Design-driven development | Medium |
@@ -365,15 +367,18 @@ Track token/time usage during builds:
 
 After implementing P0-P1:
 
-| Metric | Current | Target |
-|--------|---------|--------|
-| Time from `/setup` to working app | ~41 min (with broken pages) | ~30 min (everything wired) |
-| Pages that fetch real data after build | 0% | 100% |
-| Forms that submit after build | 0% | 100% |
-| Ideas challenged/refined during interview | 0 | Every build |
-| Features deferred to v2 | 0 (build everything) | 30-50% (focused MVP) |
-| Quality gate pass rate | ~75% (HomeBase) | 95%+ |
-| Unused skills after build | 1+ (HomeBase had charts) | 0 |
+| Metric | Before | After P0-P1 | Target |
+|--------|--------|-------------|--------|
+| Time from `/setup` to working app | ~41 min (broken pages) | ~25 min (generators) | ~20 min |
+| Pages that fetch real data after build | 0% | 100% (generators) | 100% |
+| Forms that submit after build | 0% | 100% (generators) | 100% |
+| Ideas challenged/refined during interview | 0 | Every build | Every build |
+| Features deferred to v2 | 0 (build everything) | 30-50% (scope gating) | 30-50% |
+| Competitive research done | Never | Every build (Step 1c) | Every build |
+| Template leftovers in output | 5+ (NanoHome) | 0 (automated cleanup) | 0 |
+| App works on first load | No (3 rounds fixing) | Yes (smoke test) | Always |
+| Quality gate pass rate | ~75% (HomeBase) | TBD (next test) | 95%+ |
+| Unused skills after build | 1+ | 0 (justification required) | 0 |
 
 ---
 
@@ -478,6 +483,36 @@ The competition is building faster hammers. Vibekit should be the advisor that m
 - Build time: ~15-20 min of LLM generation → ~2-3 min (generators + customization)
 - Token cost: dramatically reduced (JSON config vs thousands of lines of code)
 - Quality: structural — tested templates produce correct code every time
+
+### 2026-03-10 — Template Cleanup, Interview Depth, Pre-Delivery Verification
+
+**Problem:** NanoHome test build scored 4/10. Three categories of failure: template leftovers (logo said "Vibekit", search command had dead `/projects` links, onboarding/billing/team stubs remained), shallow interview (no competitive research, no domain analysis depth), and no pre-delivery verification (app didn't work on first load, required 3 rounds of troubleshooting).
+
+**Template cleanup automation:**
+- `generators/app-chrome.ts` (new) — generates branded logo with app name, search command with correct routes from sidebar spec, root page redirect to `/dashboard`
+- `cleanupTemplateFiles()` expanded — removes onboarding/, settings/billing, settings/team stubs
+- `stripTemplateModels()` (new) — removes template Project/Task models from Prisma schema before generating new ones
+- Dashboard readOnly empty state — says "will appear here once data is available" instead of "Create your first X" for readOnly models
+- External router stubs now `console.warn` instead of silently returning empty results
+
+**Interview depth — competitive research (2.3 done):**
+- Step 1c: Competitive Research — WebSearch for 3-5 existing tools in the same space, identify table-stakes features, ensure build plan meets baseline
+- Step 1b deepened — data absence analysis (what data doesn't exist), data freshness analysis (how often it changes → determines refresh strategy), first-run analysis (what to show with zero data)
+- Category-specific scope overrides — for monitoring/dashboard/analytics apps: auto-refresh, health indicators, charts are all v1 requirements, not v2
+- Feature Richness Checklist expanded — monitoring apps must include health indicators, auto-refresh, last-updated timestamps, connection status, charts
+- Quick Start path updated — launches WebSearch in parallel with domain discovery Task agent
+
+**Pre-delivery verification pipeline:**
+- Step 10f: Pre-Delivery Checklist — verifies logo branding, search command routes, root redirect, template cleanup, Prisma schema clean, stub implementation
+- Step 10g-smoke: Runtime Smoke Test — starts dev server, curls key pages, catches 500 errors before user sees them
+- Build order reordered — commit working app first, then write documentation (docs are now after smoke test)
+- `pnpm approve-builds` handled — pre-configures `onlyBuiltDependencies` in package.json to avoid interactive TUI during `pnpm install`
+
+**Impact:**
+- Template leftovers: 0 after generators run (automated cleanup + generation)
+- Interview depth: competitive research, data analysis, monitoring-specific rules
+- Zero-troubleshooting: smoke test catches runtime errors before the user sees them
+- Approval budget updated: competitive research + smoke test accounted for in the 25-approval target
 
 ### 2026-03-06 — Design System Overhaul
 

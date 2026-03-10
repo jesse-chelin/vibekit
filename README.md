@@ -112,11 +112,15 @@ You have two paths:
 
 **Custom Build** — Go step by step. Claude interviews you about your target user, validates the idea, scopes the MVP (hard limits: 5 features, 7 pages, 3 skills), plans the data model, picks a design vibe, and presents everything for approval before writing a single line of code.
 
+For apps that connect to external systems (monitoring dashboards, database viewers, API wrappers), Claude investigates the external system's data first — explores database schemas, researches competing tools, and identifies table-stakes features before proposing what to build.
+
 Either way, after you approve the build plan, Claude:
 1. Compiles a build spec and runs code generators (models, routers, pages, dashboard, sidebar — all in seconds)
 2. Installs selected skills (payments, charts, AI, etc.)
 3. Customizes with business logic, branding, and polish
-4. Verifies the build, seeds demo data, writes documentation, and commits
+4. Runs a pre-delivery checklist (no template leftovers, no broken routes)
+5. Smoke tests the running app (no 500 errors on first load)
+6. Writes documentation and commits
 
 When it's done, run `pnpm dev` to see your app at **http://localhost:3000**.
 
@@ -194,6 +198,7 @@ npx tsx generators/compose.ts .vibekit/build-spec.json
 | `detail-page.ts` | Detail page with sidebar + content + delete button |
 | `form-page.ts` | Create + edit pages with Zod validation + loading skeletons |
 | `dashboard.ts` | Stat cards + recent activity card |
+| `app-chrome.ts` | Branded logo, search command with correct routes, root redirect |
 | `sidebar.ts` | Navigation with correct icons and routes |
 | `seed.ts` | Realistic seed data |
 
