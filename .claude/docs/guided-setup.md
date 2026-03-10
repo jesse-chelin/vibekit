@@ -45,6 +45,12 @@ From the user's description, identify the category and auto-select:
 | Media management | file-uploads, charts | Media, Collection, Tag | Dashboard, Library, Upload, Detail, Settings |
 | Internal tool | admin-panel, rbac, charts | varies by domain | Dashboard, Admin, Entity list/detail, Settings |
 
+### 1b. Domain Discovery (external systems)
+
+**If the user mentions an external system, database, API, or local installation** — STOP and investigate BEFORE proposing features. See "Step 1b: Domain Discovery" in the Custom Build Path for full details. This applies to Quick Start too. You cannot propose good features for a system you haven't examined.
+
+Read the external system's repo/README, database schema, and available data. Understand what entities exist, what data changes frequently, and what would make this dashboard indispensable. This takes 2-3 minutes and prevents building something technically correct but functionally useless.
+
 ### 2. Light validation + auto scope
 
 Infer validation context from the one-sentence description. Don't interrogate — present your inferences for confirmation:
@@ -129,6 +135,35 @@ Listen for category signals:
 Respond: "So it sounds like you're building a [category]. Here's what I'm thinking..."
 
 Do NOT ask "who is it for?" here — that's covered in depth in Step 2.
+
+#### Step 1b: Domain Discovery (for external systems)
+
+If the user mentions an external system, API, database, or existing tool they want to build on top of (e.g., "a dashboard for NanoClaw", "an interface for my home automation", "a viewer for my media server"), you MUST investigate it BEFORE proposing features.
+
+**If the user provides a GitHub URL or repo path:**
+- Read the README to understand what the system does
+- Look at the database schema (look for `.sql` files, migration files, `schema.prisma`, SQLite databases, or ORM model definitions)
+- Check what data is available — tables, columns, relationships
+- Understand the system's core concepts (what entities exist, what actions are possible)
+
+**If the user provides a local installation path:**
+- Look for database files (`.db`, `.sqlite`, `.sqlite3`)
+- If found, open with `sqlite3 <path> ".schema"` or `sqlite3 <path> ".tables"` to discover the full schema
+- Look for config files that reveal the system's structure
+- Check for log files that reveal what the system does at runtime
+
+**If the user provides an API:**
+- Check for API docs, OpenAPI/Swagger specs
+- Understand available endpoints and data shapes
+
+**WHY THIS MATTERS:** You cannot build a good dashboard for something you don't understand. A messaging system has BOTH inbound and outbound messages — if you only show one direction, the dashboard is useless. A task scheduler has inputs, outputs, run history, and failure states — showing just a list of task names misses the point. Invest 2-3 minutes understanding the domain BEFORE proposing what to build. This prevents building something technically correct but functionally useless.
+
+**What to capture from domain discovery:**
+- All available data entities and their relationships
+- What data changes frequently (→ needs real-time or auto-refresh)
+- What data the user would want to monitor at a glance (→ dashboard stats)
+- What actions the user might want to take (→ interactive features, not just read-only)
+- What would make this dashboard INDISPENSABLE — the thing that makes the user keep it open all day
 
 ### Step 2: Idea Validation
 
@@ -993,9 +1028,16 @@ Use `[[wiki-links]]` for cross-references between docs (shortest unambiguous nam
 
 **`docs/roadmap.md`** — Feature Roadmap:
 - Current Sprint (empty — app just launched)
-- Up Next (3-5 features from `intent.json.v2Features`)
-- Future Ideas (3-5 longer-term ideas based on app type)
+- Up Next (3-5 features from `intent.json.v2Features`, PRIORITIZED by user impact)
+- Future Ideas (3-5 longer-term ideas based on app type and domain knowledge)
 - Completed: "Initial build — [today's date]" with summary
+
+**Roadmap quality rules:**
+- Every item must describe a concrete user benefit, not a technical task. "Real-time message streaming — see agent responses as they arrive" not "Add WebSocket support."
+- Prioritize by impact: what would the user ask for FIRST? That goes at the top.
+- For external system dashboards: features should be based on what data is ACTUALLY available in the external system — check the schema. Don't propose features that require data that doesn't exist.
+- Include a mix of quick wins (can build in one session) and ambitious features (require multiple sessions). Label them.
+- Never include generic filler like "improve performance" or "add more charts" — every item should be specific to THIS app's domain.
 
 **`docs/changelog.md`** — Change History:
 ```markdown
@@ -1162,6 +1204,32 @@ After building, verify EVERY generated page against this checklist:
 | Rapid clicks | If you click "Create" 5 times fast, does it create 5 duplicates? Buttons should disable during async. |
 
 If ANY check fails, fix it immediately. Do not move on to the next page.
+
+### Self-Assessment (MANDATORY — do this BEFORE showing the summary)
+
+After verification passes, step back and critically evaluate what you built. Ask yourself these questions and FIX any issues before presenting the summary:
+
+**Does the data make sense?**
+- For a messaging/chat system: Can the user see BOTH sides of conversations (sent AND received)? If not, the dashboard is broken.
+- For a monitoring system: Does the data feel alive? Is there auto-refresh or timestamps showing how current the data is?
+- For a task/job system: Can the user see inputs, outputs, success/failure, and history — not just a list of names?
+- For any system with relationships: Can the user navigate between related items? (e.g., click a group to see its messages, click a task to see its runs)
+
+**Would the user keep this open all day?**
+- If the dashboard only shows static lists of data, it's a database viewer, not a dashboard. Add: real-time indicators, status summaries, trend information, or actionable items.
+- If the user has to go to the terminal/CLI to do common tasks, the dashboard isn't useful enough. Add interactive features for the most common actions.
+
+**Is anything obviously missing?**
+- Think about what someone who uses this system DAILY would expect. What would they check first thing in the morning? That should be on the dashboard.
+- If the system has error states or failure modes, can the user see them? Errors and failures are usually the #1 reason someone checks a dashboard.
+- If there are logs, can the user search and filter them? Raw log dumps are useless — add search, level filtering, and time ranges.
+
+**Is the roadmap actually useful?**
+- The roadmap should list specific, prioritized features based on what the system's data supports — not generic items like "add more charts" or "improve performance."
+- Each roadmap item should describe a concrete user benefit: "Real-time message streaming — see agent responses as they arrive, not after refreshing" is good. "Add WebSocket support" is too technical and vague.
+- Prioritize by user impact: what would the user ask for FIRST if they could only build one more thing?
+
+**If any of these checks reveal a gap, fix it now.** It's cheaper to add a missing feature before presenting the summary than to have the user discover it's missing and lose confidence.
 
 ### Post-Build Summary
 
