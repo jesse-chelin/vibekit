@@ -32,10 +32,12 @@ Run ALL infrastructure setup in a SINGLE bash command. The user should only need
 ```bash
 # Single command that checks prereqs, pre-approves native builds, installs deps, sets up env, and initializes DB
 node -v && pnpm -v && git --version && \
-([ -d node_modules ] || (node -e "const p=require('./package.json'); p.pnpm=p.pnpm||{}; p.pnpm.onlyBuiltDependencies=p.pnpm.onlyBuiltDependencies||[]; if(!p.pnpm.onlyBuiltDependencies.includes('better-sqlite3')){p.pnpm.onlyBuiltDependencies.push('better-sqlite3')} require('fs').writeFileSync('package.json',JSON.stringify(p,null,2)+'\n')" && pnpm install)) && \
+([ -d node_modules ] || (node -e 'var p=require("./package.json"),a=["better-sqlite3","esbuild"];p.pnpm=p.pnpm||{};p.pnpm.onlyBuiltDependencies=p.pnpm.onlyBuiltDependencies||[];a.forEach(function(d){if(p.pnpm.onlyBuiltDependencies.indexOf(d)<0)p.pnpm.onlyBuiltDependencies.push(d)});require("fs").writeFileSync("package.json",JSON.stringify(p,null,2)+"\n")' && pnpm install)) && \
 ([ -f .env ] || (AUTH_SECRET=$(openssl rand -base64 32) && printf 'DATABASE_URL="file:./dev.db"\nAUTH_SECRET="%s"\nAUTH_URL="http://localhost:3000"\nNEXT_PUBLIC_APP_URL="http://localhost:3000"\n' "$AUTH_SECRET" > .env && cp .env .env.local)) && \
 ([ -f prisma/dev.db ] || (pnpm db:generate && pnpm db:push && pnpm db:seed))
 ```
+
+**IMPORTANT:** The `node -e` command uses single quotes and avoids `!` (which bash interprets as history expansion). It uses `.indexOf(d)<0` instead of `!.includes()`. Both `better-sqlite3` and `esbuild` are pre-approved to avoid the interactive `pnpm approve-builds` TUI.
 
 If ANY prerequisite is missing, the command fails fast and shows what's needed. If any step was already done, it skips silently.
 
