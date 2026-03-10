@@ -121,5 +121,6 @@ Then present the post-build summary from `guided-setup.md`.
 - Every page must have loading, empty, error, and mobile states. No exceptions.
 - Run `pnpm build` to verify before finishing.
 - If something fails at any step, stop, explain clearly, and suggest a fix. Don't silently skip steps.
+- **DO NOT explore the vibekit template source code** before or during the build. Do not launch explore agents to read `src/components/`, `src/trpc/`, `generators/`, or template page files. CLAUDE.md and `.claude/docs/` contain all the patterns, conventions, and code templates you need. Only read specific source files when you need to modify or debug them. Excessive exploration wastes tokens and makes the setup take much longer than it should.
 
 $ARGUMENTS

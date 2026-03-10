@@ -32,6 +32,8 @@ Every time you open this project, do this first:
    - `docs/features/` — individual feature specifications
 5. Now you have full context. Help the user with whatever they need.
 
+**DO NOT explore the vibekit template source code.** This file (CLAUDE.md), the docs in `.claude/docs/`, and `APP.md` contain everything you need. Do not read `src/components/`, `src/trpc/`, `src/app/` template files, or `generators/` source to "understand the codebase" — that wastes tokens and time. Only read specific source files when you need to modify or debug them.
+
 ## First Run
 
 If this is a fresh clone with no `APP.md`:
