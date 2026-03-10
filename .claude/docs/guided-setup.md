@@ -714,6 +714,40 @@ For a household management app with three models (from the interview):
 
 **Verify**: The build-spec is valid JSON and all model names referenced in `belongsTo`, `hasMany`, `sidebar`, and `dashboard.recentEntity` match actual model names in the spec.
 
+##### External Data Source Build Specs
+
+When the app connects to an **external database** (e.g., another app's SQLite DB) instead of using Prisma for its primary data, add these fields to the build spec:
+
+**Top-level:**
+```json
+{
+  "dataSource": "external",
+  ...
+}
+```
+
+**Per-model:** Add `"readOnly": true` to models that should not have create/edit/delete UI or mutation procedures:
+```json
+{
+  "name": "Server",
+  "readOnly": true,
+  ...
+}
+```
+
+**What changes with `dataSource: "external"`:**
+- No Prisma model generation (no schema modifications)
+- No seed data generation
+- tRPC routers have stub query bodies with `// IMPLEMENT:` markers instead of Prisma calls
+- A `src/lib/external-db.ts` skeleton is generated with `getDb()` using `better-sqlite3` (readonly mode)
+- User stats procedure uses stubs instead of Prisma counts
+
+**What changes with `readOnly: true`:**
+- List pages have no "New [Entity]" button, no Edit/Delete actions (only View)
+- Detail pages have no Edit button, no delete button component
+- No form pages generated (no create/edit routes)
+- Routers only have `list` and `byId` procedures (no create/update/delete)
+
 #### 10b. Run Code Generators
 
 ```bash
@@ -766,6 +800,7 @@ The generators produce functional CRUD scaffolding. This step elevates it from "
 - **Non-standard pages** — Any pages that don't follow the standard CRUD pattern
 - **Landing page** — If `needsLandingPage` is true, customize the landing page content
 - **Polish and richness** — See Feature Richness Checklist below
+- **External data source routers** — If `dataSource: "external"`, fill in the `// IMPLEMENT:` stubs in each router with actual SQL queries. Also configure `EXTERNAL_DB_PATH` in `.env` and update `src/lib/external-db.ts` if the connection needs customization
 
 ##### Feature Richness Checklist (MANDATORY)
 

@@ -1,5 +1,6 @@
 export interface BuildSpec {
   appName: string;
+  dataSource?: "prisma" | "external";  // default: "prisma"
   models: ModelSpec[];
   sidebar: NavItemSpec[];
   dashboard: DashboardSpec;
@@ -18,6 +19,7 @@ export interface ModelSpec {
   hasMany: string[];
   searchFields: string[];
   defaultSort: string;
+  readOnly?: boolean;  // default: false — skip create/edit forms and mutation procedures
 }
 
 export interface FieldSpec {

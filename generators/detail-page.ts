@@ -23,6 +23,7 @@ function generateDetailServer(model: ModelSpec): string {
   const name = model.name;
   const slug = model.slug;
   const display = displayField(model.fields);
+  const readOnly = model.readOnly === true;
 
   // Detail fields for sidebar (all fields except the display field)
   const detailFields = model.fields.filter(
@@ -149,6 +150,23 @@ function generateDetailServer(model: ModelSpec): string {
 
   const needsBadge = detailFields.some((f) => f.enum);
 
+  const deleteButtonImport = readOnly ? "" : '\nimport { DeleteButton } from "./_components/delete-button";';
+  const iconImports = readOnly ? `${model.icon}` : `${model.icon}, Edit`;
+
+  const actionsBlock = readOnly
+    ? ""
+    : `
+        actions={
+          <div className="flex gap-2">
+            <Button variant="outline" asChild>
+              <Link href={\`/${slug}/\${id}/edit\`}>
+                <Edit className="mr-2 h-4 w-4" /> Edit
+              </Link>
+            </Button>
+            <DeleteButton ${lower}Id={id} />
+          </div>
+        }`;
+
   return `import { notFound } from "next/navigation";
 import Link from "next/link";
 import { caller } from "@/trpc/server";
@@ -157,8 +175,7 @@ import { DetailLayout } from "@/components/patterns/detail-layout";
 import { EmptyState } from "@/components/patterns/empty-state";
 import { Button } from "@/components/ui/button";${needsBadge ? '\nimport { Badge } from "@/components/ui/badge";' : ""}
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ${model.icon}, Edit } from "lucide-react";
-import { DeleteButton } from "./_components/delete-button";
+import { ${iconImports} } from "lucide-react";${deleteButtonImport}
 
 export const dynamic = "force-dynamic";
 
@@ -182,17 +199,7 @@ export default async function ${name}DetailPage({
     <div className="space-y-6">
       <PageHeader
         title={${lower}.${display}}
-        ${descField ? `description={${lower}.description || undefined}` : ""}
-        actions={
-          <div className="flex gap-2">
-            <Button variant="outline" asChild>
-              <Link href={\`/${slug}/\${id}/edit\`}>
-                <Edit className="mr-2 h-4 w-4" /> Edit
-              </Link>
-            </Button>
-            <DeleteButton ${lower}Id={id} />
-          </div>
-        }
+        ${descField ? `description={${lower}.description || undefined}` : ""}${actionsBlock}
       />
 
       <DetailLayout
@@ -260,6 +267,8 @@ export default function ${model.name}DetailLoading() {
 
 // Also generate the delete button client component
 export function generateDeleteButton(model: ModelSpec): void {
+  if (model.readOnly) return;
+
   const lower = lowerFirst(model.name);
   const slug = model.slug;
   const baseDir = resolvePath("src", "app", "(app)", slug, "[id]", "_components");

@@ -4,6 +4,7 @@ import type { BuildSpec } from "./types";
 import { resolvePath, deleteFileOrDir } from "./utils";
 import { generatePrismaModels } from "./prisma-model";
 import { generateTrpcRouters } from "./trpc-router";
+import { generateExternalRouters } from "./trpc-router-external";
 import { generateListPage } from "./list-page";
 import { generateDetailPage, generateDeleteButton } from "./detail-page";
 import { generateFormPages } from "./form-page";
@@ -45,21 +46,28 @@ function main(): void {
   console.log(`Spec: ${resolvedPath}\n`);
 
   const spec = loadBuildSpec(resolvedPath);
+  const isExternal = spec.dataSource === "external";
+
   console.log(`Building: ${spec.appName}`);
+  console.log(`Data source: ${isExternal ? "external" : "prisma"}`);
   console.log(`Models: ${spec.models.map((m) => m.name).join(", ")}\n`);
 
   // 1. Clean up template files
   console.log("Cleaning template files...");
   cleanupTemplateFiles();
 
-  // 2. Generate Prisma models
+  // 2. Generate data layer
   console.log("\nGenerating data layer...");
-  generatePrismaModels(spec);
+  if (isExternal) {
+    // External: skip Prisma models, use external router generator
+    generateExternalRouters(spec);
+  } else {
+    // Prisma (default): generate models, routers, and seed
+    generatePrismaModels(spec);
+    generateTrpcRouters(spec);
+  }
 
-  // 3. Generate tRPC routers
-  generateTrpcRouters(spec);
-
-  // 4. Generate pages for each model
+  // 3. Generate pages for each model
   console.log("\nGenerating pages...");
   for (const model of spec.models) {
     generateListPage(model);
@@ -68,28 +76,44 @@ function main(): void {
     generateFormPages(model);
   }
 
-  // 5. Generate dashboard
+  // 4. Generate dashboard
   generateDashboard(spec);
 
-  // 6. Generate sidebar
+  // 5. Generate sidebar
   console.log("\nGenerating navigation...");
   generateSidebar(spec);
 
-  // 7. Generate seed data
-  console.log("\nGenerating seed data...");
-  generateSeed(spec);
+  // 6. Generate seed data (skip for external)
+  if (!isExternal) {
+    console.log("\nGenerating seed data...");
+    generateSeed(spec);
+  }
 
   // Summary
-  const totalPages = spec.models.length * 4 + 1; // list + detail + create + edit per model + dashboard
+  const readOnlyCount = spec.models.filter((m) => m.readOnly).length;
+  const mutableCount = spec.models.length - readOnlyCount;
+  const totalPages = mutableCount * 4 + readOnlyCount * 2 + 1; // mutable: list+detail+create+edit, readOnly: list+detail, +dashboard
+  const procedureCount = isExternal
+    ? spec.models.reduce((sum, m) => sum + (m.readOnly ? 2 : 5), 0)
+    : spec.models.length * 5;
+
   console.log(`\n✓ Generation complete!`);
-  console.log(`  ${spec.models.length} models`);
-  console.log(`  ${spec.models.length} tRPC routers (${spec.models.length * 5} procedures)`);
+  console.log(`  ${spec.models.length} models${readOnlyCount > 0 ? ` (${readOnlyCount} read-only)` : ""}`);
+  console.log(`  ${spec.models.length} tRPC routers (${procedureCount} procedures)`);
   console.log(`  ${totalPages} pages`);
   console.log(`  ${spec.sidebar.length} sidebar items`);
-  console.log(`\nNext steps:`);
-  console.log(`  1. pnpm db:push          (apply schema)`);
-  console.log(`  2. pnpm db:seed          (seed data)`);
-  console.log(`  3. pnpm build            (verify)`);
+
+  if (isExternal) {
+    console.log(`\nNext steps:`);
+    console.log(`  1. Set EXTERNAL_DB_PATH in .env`);
+    console.log(`  2. Implement query bodies in src/trpc/routers/ (search for "IMPLEMENT:")`);
+    console.log(`  3. pnpm build            (verify)`);
+  } else {
+    console.log(`\nNext steps:`);
+    console.log(`  1. pnpm db:push          (apply schema)`);
+    console.log(`  2. pnpm db:seed          (seed data)`);
+    console.log(`  3. pnpm build            (verify)`);
+  }
 }
 
 main();

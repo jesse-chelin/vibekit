@@ -8,6 +8,8 @@ import {
 } from "./utils";
 
 export function generateFormPages(model: ModelSpec): void {
+  if (model.readOnly) return;
+
   const slug = model.slug;
 
   // Create page

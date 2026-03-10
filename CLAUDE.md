@@ -61,6 +61,8 @@ Produces all standard CRUD scaffolding from a JSON build spec (`generators/types
 
 **What it generates:** Prisma models, tRPC routers (5 procedures each), list pages (server + client + loading), detail pages (sidebar + content + loading + delete button), form pages (create + edit + loading), dashboard (stat cards + recent entity), sidebar navigation, seed data.
 
+**External data sources:** Set `"dataSource": "external"` in the build spec to skip Prisma/seed generation and produce tRPC routers with stub query bodies (`// IMPLEMENT:` markers) + a `src/lib/external-db.ts` connection module. Set `"readOnly": true` on individual models to skip form pages and mutation procedures. Page generators are data-source-agnostic — they work identically for both modes.
+
 **Idempotent:** Safe to re-run — cleans previous generated models/pages before regenerating.
 
 **The LLM writes the build-spec.json** during Step 10a of the build, then generators handle the standard 80%. The LLM customization pass (Step 10e) handles business logic, skill integration, branding, and non-standard features.

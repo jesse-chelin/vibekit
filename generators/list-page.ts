@@ -63,6 +63,7 @@ function generateClientList(model: ModelSpec): string {
   const slug = model.slug;
   const display = displayField(model.fields);
   const listFields = model.fields.filter((f) => f.showInList);
+  const readOnly = model.readOnly === true;
 
   // Collect enum fields that need color maps
   const enumListFields = listFields.filter((f) => f.enum);
@@ -143,7 +144,17 @@ function generateClientList(model: ModelSpec): string {
   }
 
   // Actions column
-  columnDefs.push(`    {
+  if (readOnly) {
+    columnDefs.push(`    {
+      id: "actions",
+      cell: ({ row }) => (
+        <Button variant="ghost" size="sm" asChild>
+          <Link href={\`/${slug}/\${row.original.id}\`}>View</Link>
+        </Button>
+      ),
+    },`);
+  } else {
+    columnDefs.push(`    {
       id: "actions",
       cell: ({ row }) => (
         <DropdownMenu>
@@ -169,6 +180,7 @@ function generateClientList(model: ModelSpec): string {
         </DropdownMenu>
       ),
     },`);
+  }
 
   // Build item type
   const typeFields = [
@@ -189,45 +201,30 @@ function generateClientList(model: ModelSpec): string {
   // Badge import needed?
   const needsBadge = enumListFields.length > 0;
 
-  return `"use client";
-
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { trpc } from "@/trpc/client";
-import { PageHeader } from "@/components/layout/page-header";
-import { EmptyState } from "@/components/patterns/empty-state";
-import { DataTable } from "@/components/patterns/data-table";
-import { ConfirmDialog } from "@/components/patterns/confirm-dialog";
-import { Button } from "@/components/ui/button";${needsBadge ? '\nimport { Badge } from "@/components/ui/badge";' : ""}
-import { type ColumnDef } from "@tanstack/react-table";
-import {
+  // Conditional imports and component body based on readOnly
+  const stateImport = readOnly ? "" : '\nimport { useState } from "react";';
+  const routerImport = readOnly ? "" : '\nimport { useRouter } from "next/navigation";';
+  const confirmImport = readOnly ? "" : '\nimport { ConfirmDialog } from "@/components/patterns/confirm-dialog";';
+  const dropdownImport = readOnly
+    ? ""
+    : `\nimport {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Plus,
-  ArrowUpDown,
-  MoreHorizontal,
-  ${model.icon},
-  Trash2,
-} from "lucide-react";
-import { toast } from "sonner";
+} from "@/components/ui/dropdown-menu";`;
+  const iconList = readOnly
+    ? `ArrowUpDown,\n  ${model.icon},`
+    : `Plus,\n  ArrowUpDown,\n  MoreHorizontal,\n  ${model.icon},\n  Trash2,`;
+  const toastImport = readOnly ? "" : '\nimport { toast } from "sonner";';
 
-type ${name}Item = {
-${typeFields.join("\n")}
-};
-
-${colorMaps.join("\n\n")}
-
-export function ${name}List() {
-  const router = useRouter();
-  const [deleteId, setDeleteId] = useState<string | null>(null);
-
-  const { data, isLoading } = trpc.${lower}.list.useQuery({});
-  const utils = trpc.useUtils();
+  // State + mutation block
+  const stateBlock = readOnly
+    ? ""
+    : `\n  const router = useRouter();\n  const [deleteId, setDeleteId] = useState<string | null>(null);`;
+  const mutationBlock = readOnly
+    ? ""
+    : `\n  const utils = trpc.useUtils();
 
   const delete${name} = trpc.${lower}.delete.useMutation({
     onSuccess: () => {
@@ -239,44 +236,31 @@ export function ${name}List() {
     onError: (error) => {
       toast.error(error.message);
     },
-  });
+  });\n`;
 
-  const columns: ColumnDef<${name}Item>[] = [
-${columnDefs.join("\n")}
-  ];
-
-  if (isLoading) return null;
-
-  return (
-    <>
-      <div className="space-y-6">
-        <PageHeader
-          title="${model.label}"
-          description="Manage and track all your ${model.label.toLowerCase()}."
+  // PageHeader actions
+  const headerActions = readOnly
+    ? ""
+    : `
           actions={
             <Button onClick={() => router.push("/${slug}/new")}>
               <Plus className="mr-2 h-4 w-4" />
               New ${model.labelSingular}
             </Button>
-          }
-        />
+          }`;
 
-        {!data?.items.length ? (
-          <EmptyState
-            icon={${model.icon}}
-            title="No ${model.label.toLowerCase()} yet"
-            description="Create your first ${model.labelSingular.toLowerCase()} to get started."
-            action={{ label: "New ${model.labelSingular}", href: "/${slug}/new" }}
-          />
-        ) : (
-          <DataTable
-            columns={columns}
-            data={data.items as ${name}Item[]}
-            searchKey="${display}"
-            searchPlaceholder="Search ${model.label.toLowerCase()}..."
-          />
-        )}
-      </div>
+  // EmptyState content
+  const emptyDescription = readOnly
+    ? `"No ${model.label.toLowerCase()} found."`
+    : `"Create your first ${model.labelSingular.toLowerCase()} to get started."`;
+  const emptyAction = readOnly
+    ? ""
+    : `\n            action={{ label: "New ${model.labelSingular}", href: "/${slug}/new" }}`;
+
+  // ConfirmDialog block
+  const confirmBlock = readOnly
+    ? ""
+    : `
 
       <ConfirmDialog
         open={deleteId !== null}
@@ -287,8 +271,63 @@ ${columnDefs.join("\n")}
         variant="destructive"
         loading={delete${name}.isPending}
         onConfirm={() => deleteId && delete${name}.mutate({ id: deleteId })}
-      />
-    </>
+      />`;
+
+  // Wrapper tag: readOnly doesn't need Fragment
+  const wrapOpen = readOnly ? "" : "\n    <>";
+  const wrapClose = readOnly ? "" : "\n    </>";
+
+  return `"use client";
+${stateImport}${routerImport}
+import Link from "next/link";
+import { trpc } from "@/trpc/client";
+import { PageHeader } from "@/components/layout/page-header";
+import { EmptyState } from "@/components/patterns/empty-state";
+import { DataTable } from "@/components/patterns/data-table";${confirmImport}
+import { Button } from "@/components/ui/button";${needsBadge ? '\nimport { Badge } from "@/components/ui/badge";' : ""}
+import { type ColumnDef } from "@tanstack/react-table";${dropdownImport}
+import {
+  ${iconList}
+} from "lucide-react";${toastImport}
+
+type ${name}Item = {
+${typeFields.join("\n")}
+};
+
+${colorMaps.join("\n\n")}
+
+export function ${name}List() {${stateBlock}
+
+  const { data, isLoading } = trpc.${lower}.list.useQuery({});
+${mutationBlock}
+  const columns: ColumnDef<${name}Item>[] = [
+${columnDefs.join("\n")}
+  ];
+
+  if (isLoading) return null;
+
+  return (${wrapOpen}
+      <div className="space-y-6">
+        <PageHeader
+          title="${model.label}"
+          description="${readOnly ? "Browse" : "Manage and track"} all your ${model.label.toLowerCase()}."${headerActions}
+        />
+
+        {!data?.items.length ? (
+          <EmptyState
+            icon={${model.icon}}
+            title="No ${model.label.toLowerCase()} yet"
+            description=${emptyDescription}${emptyAction}
+          />
+        ) : (
+          <DataTable
+            columns={columns}
+            data={data.items as ${name}Item[]}
+            searchKey="${display}"
+            searchPlaceholder="Search ${model.label.toLowerCase()}..."
+          />
+        )}
+      </div>${confirmBlock}${wrapOpen ? "\n    </>" : ""}
   );
 }
 `;
