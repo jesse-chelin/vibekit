@@ -1,5 +1,5 @@
-import type { BuildSpec, ModelSpec } from "./types";
-import { resolvePath, writeFile, lowerFirst, iconColor } from "./utils";
+import type { BuildSpec } from "./types";
+import { resolvePath, writeFile, lowerFirst, iconColor, relativeTimeHelper, displayField } from "./utils";
 
 const DASHBOARD_DIR = resolvePath("src", "app", "(app)", "dashboard");
 
@@ -45,11 +45,16 @@ function generateDashboardClient(spec: BuildSpec): string {
   const recentLabelSingular = recentModel?.labelSingular ?? spec.models[0].labelSingular;
   const recentIcon = recentModel?.icon ?? spec.models[0].icon;
 
+  const hasCharts = spec.skills?.includes("charts") === true;
+  const isExternal = spec.dataSource === "external";
+
   // Collect all icons needed
   const iconImports = new Set<string>();
   for (const model of spec.models) {
     iconImports.add(model.icon);
   }
+  iconImports.add("RefreshCw");
+  iconImports.add("Loader2");
 
   // Stat cards
   const statCards = spec.models.map((model, i) => {
@@ -65,7 +70,7 @@ function generateDashboardClient(spec: BuildSpec): string {
         </StaggerItem>`;
   });
 
-  // Status color map for recent items (use first enum field if available)
+  // Status color map for recent items
   const statusField = recentModel?.fields.find(
     (f) => f.enum && f.name === "status"
   );
@@ -94,9 +99,9 @@ function generateDashboardClient(spec: BuildSpec): string {
   }
 
   // Determine display field for recent items
-  const displayFieldName = recentModel?.fields.find(
-    (f) => f.name === "name" || f.name === "title"
-  )?.name ?? "name";
+  const displayFieldName = recentModel
+    ? displayField(recentModel.fields)
+    : "name";
 
   // Grid columns based on stat count
   const gridCols =
@@ -109,6 +114,70 @@ function generateDashboardClient(spec: BuildSpec): string {
   const needsBadge = statusField != null;
   const recentVarName = `recent${recentModel?.name ?? spec.models[0].name}s`;
 
+  // Build imports
+  const chartImports = hasCharts
+    ? `\nimport { ChartCard } from "@/components/patterns/chart-card";\nimport { LineChart, DonutChart } from "@/components/patterns/charts";`
+    : "";
+  const badgeImport = needsBadge ? '\nimport { Badge } from "@/components/ui/badge";' : "";
+
+  // Recent item type fields
+  const recentTypeFields = [`id: string`, `${displayFieldName}: string`, `createdAt: string`];
+  if (statusField) recentTypeFields.push("status: string | null");
+
+  // Charts section (only when charts skill installed)
+  const chartsSection = hasCharts ? `
+      {/* Charts — customize data keys in the customization pass */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <SlideUp className="lg:col-span-2">
+          <ChartCard
+            title="Activity"
+            description="Trend over time"
+          >
+            {stats?.dailyActivity && stats.dailyActivity.length > 0 ? (
+              <LineChart data={stats.dailyActivity} dataKey="count" xAxisKey="date" height={280} />
+            ) : (
+              <div className="flex h-[280px] items-center justify-center text-sm text-muted-foreground">
+                No activity data yet
+              </div>
+            )}
+          </ChartCard>
+        </SlideUp>
+        <SlideUp>
+          <ChartCard
+            title="Breakdown"
+            description="Distribution by category"
+          >
+            {stats?.breakdown && stats.breakdown.length > 0 ? (
+              <DonutChart data={stats.breakdown} height={280} />
+            ) : (
+              <div className="flex h-[280px] items-center justify-center text-sm text-muted-foreground">
+                No breakdown data yet
+              </div>
+            )}
+          </ChartCard>
+        </SlideUp>
+      </div>
+` : "";
+
+  // Auto-refresh for external/monitoring apps
+  const autoRefreshBlock = isExternal ? `
+  useEffect(() => {
+    const interval = setInterval(() => {
+      void utils.user.stats.invalidate();
+      void utils.${recentLower}.list.invalidate();
+      setLastUpdated(new Date().toISOString());
+    }, 60_000);
+    return () => clearInterval(interval);
+  }, [utils]);
+` : "";
+
+  // Health indicator for external apps
+  const healthIndicator = isExternal ? `
+              <span className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-xs text-muted-foreground">Connected</span>
+              </span>` : "";
+
   return `"use client";
 
 import Link from "next/link";
@@ -116,26 +185,59 @@ import { trpc } from "@/trpc/client";
 import { PageHeader } from "@/components/layout/page-header";
 import { StatCard } from "@/components/patterns/stat-card";
 import { EmptyState } from "@/components/patterns/empty-state";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";${needsBadge ? '\nimport { Badge } from "@/components/ui/badge";' : ""}
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";${badgeImport}${chartImports}
 import { Button } from "@/components/ui/button";
 import { StaggerList, StaggerItem, SlideUp } from "@/components/shared/motion";
 import { ${[...iconImports].join(", ")} } from "lucide-react";
+import { useState${isExternal ? ", useEffect" : ""}, useCallback } from "react";
+
+${relativeTimeHelper()}
 ${statusColorMap}
 export function DashboardContent() {
+  const utils = trpc.useUtils();
   const { data: stats } = trpc.user.stats.useQuery();
   const { data: ${recentVarName} } = trpc.${recentLower}.list.useQuery({ page: 1, pageSize: 5 });
+  const [lastUpdated, setLastUpdated] = useState<string>(new Date().toISOString());
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    await utils.user.stats.invalidate();
+    await utils.${recentLower}.list.invalidate();
+    setLastUpdated(new Date().toISOString());
+    setIsRefreshing(false);
+  }, [utils]);
+${autoRefreshBlock}
   return (
     <div className="space-y-6">
       <PageHeader
         title="Dashboard"
         description="${spec.dashboard.description}"
+        actions={
+          <div className="flex items-center gap-3">${healthIndicator}
+            <span className="text-xs text-muted-foreground">
+              Updated {formatRelativeTime(lastUpdated)}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void handleRefresh()}
+              disabled={isRefreshing}
+            >
+              {isRefreshing ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+        }
       />
 
       <StaggerList className="grid gap-4 ${gridCols}">
 ${statCards.join("\n")}
       </StaggerList>
-
+${chartsSection}
       <SlideUp>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
@@ -157,7 +259,7 @@ ${statCards.join("\n")}
               />
             ) : (
               <div className="space-y-2">
-                {${recentVarName}.items.map((item: { id: string; ${displayFieldName}: string${statusField ? "; status: string | null" : ""} }) => (
+                {${recentVarName}.items.map((item: { ${recentTypeFields.join("; ")} }) => (
                   <Link
                     key={item.id}
                     href={\`/${recentSlug}/\${item.id}\`}
@@ -166,6 +268,9 @@ ${statCards.join("\n")}
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium truncate">
                         {item.${displayFieldName}}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatRelativeTime(item.createdAt)}
                       </p>
                     </div>${statusBadge}
                   </Link>
@@ -183,6 +288,8 @@ ${statCards.join("\n")}
 
 function generateDashboardLoading(spec: BuildSpec): string {
   const statCount = spec.models.length;
+  const hasCharts = spec.skills?.includes("charts") === true;
+
   const statSkeletons = Array.from({ length: statCount })
     .map(
       () => `          <Skeleton className="h-[104px] rounded-lg" />`
@@ -196,20 +303,33 @@ function generateDashboardLoading(spec: BuildSpec): string {
         ? "sm:grid-cols-3"
         : "sm:grid-cols-2 lg:grid-cols-4";
 
+  const chartSkeletons = hasCharts ? `
+      <div className="grid gap-6 lg:grid-cols-3">
+        <Skeleton className="lg:col-span-2 h-[360px] rounded-lg" />
+        <Skeleton className="h-[360px] rounded-lg" />
+      </div>
+` : "";
+
   return `import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DashboardLoading() {
   return (
     <div className="space-y-6">
-      <div>
-        <Skeleton className="h-8 w-32" />
-        <Skeleton className="mt-1 h-4 w-64" />
+      <div className="flex items-center justify-between">
+        <div>
+          <Skeleton className="h-8 w-32" />
+          <Skeleton className="mt-1 h-4 w-64" />
+        </div>
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-8 w-8 rounded-md" />
+        </div>
       </div>
 
       <div className="grid gap-4 ${gridCols}">
 ${statSkeletons}
       </div>
-
+${chartSkeletons}
       <div className="rounded-lg border">
         <div className="border-b p-6">
           <Skeleton className="h-5 w-36" />

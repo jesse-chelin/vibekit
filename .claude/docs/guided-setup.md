@@ -896,14 +896,15 @@ What the generators produce:
 
 The generators produce functional CRUD scaffolding. This step elevates it from "works" to "impresses." The user's expectation is that the output EXCEEDS what they imagined — not that they have to troubleshoot or feel underwhelmed. Spend real effort here.
 
-#### Customization Pass Budget: 15 approvals maximum
+#### Customization Pass Guidelines
 
-1. Read all generated files in ONE pass (1-2 approvals): parallel Reads or single Task agent
-2. Write all router implementations in one message (1-2 approvals): parallel Edits
-3. Write all customizations per page in one message (1 approval per page)
-4. Apply branding in one message (1 approval): globals.css + constants
+Target: complete customization in 15-25 tool calls. Batch aggressively:
+1. Read all generated files in ONE pass (1-2 calls): parallel Reads
+2. Write all router implementations in one message (1-2 calls): parallel Edits
+3. Write all customizations per page in one message (1 call per page)
+4. Apply branding in one message (1 call): globals.css + constants
 
-If you exceed 15 approvals for customization, you're being too incremental.
+More tool calls are acceptable if they produce QUALITY — fewer calls that produce bare output is worse. The goal is impressive output, not minimal tool calls.
 
 ##### What to customize:
 
@@ -1002,7 +1003,8 @@ echo "2. Search command:" && grep -c "/projects" src/components/patterns/search-
 echo "3. Root redirect:" && grep -c "redirect" src/app/page.tsx && echo "  ✓ Root redirects to dashboard" || echo "  ⚠ Root page is not a redirect!" && \
 echo "4. Template pages:" && ([ -d src/app/\(app\)/onboarding ] && echo "  ⚠ onboarding/ still exists" || echo "  ✓ No template pages") && \
 echo "5. Prisma models:" && (grep -c "model Project" prisma/schema.prisma 2>/dev/null && echo "  ⚠ Template Project model still in schema!" || echo "  ✓ No template models") && \
-echo "6. IMPLEMENT stubs:" && (grep -rc "IMPLEMENT:" src/trpc/routers/ 2>/dev/null && echo "  ⚠ Unimplemented router stubs found" || echo "  ✓ All stubs implemented or N/A")
+echo "6. IMPLEMENT stubs:" && (grep -rc "IMPLEMENT:" src/trpc/routers/ 2>/dev/null && echo "  ⚠ Unimplemented router stubs found" || echo "  ✓ All stubs implemented or N/A") && \
+echo "7. Skill wiring:" && (grep -rl "ChartCard\|LineChart\|BarChart\|DonutChart" src/app/\(app\)/dashboard/_components/*.tsx 2>/dev/null && echo "  ✓ Charts wired into dashboard" || (npx tsx skills-engine/index.ts list 2>/dev/null | grep -q "charts" && echo "  ⚠ Charts skill installed but NOT used in dashboard!" || echo "  ✓ Charts skill not installed (OK)"))
 ```
 
 | Check | What to verify |
@@ -1015,6 +1017,7 @@ echo "6. IMPLEMENT stubs:" && (grep -rc "IMPLEMENT:" src/trpc/routers/ 2>/dev/nu
 | All sidebar nav items have working routes | Each sidebar href has a matching `src/app/(app)/` directory |
 | For external apps: `// IMPLEMENT:` stubs filled in | `grep -r "IMPLEMENT:" src/trpc/routers/` returns nothing |
 | For external apps: EXTERNAL_DB_PATH correct in .env | Path points to an existing file |
+| Installed skills are wired into pages | Charts skill → dashboard has ChartCard/LineChart. Don't install skills and leave them unused. |
 
 If ANY check fails, fix it before proceeding. The generators should handle most of these (logo, search command, root redirect, template cleanup), but verify anyway.
 

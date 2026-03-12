@@ -6,6 +6,7 @@ import {
   camelToTitle,
   displayField,
   enumColorMap,
+  relativeTimeHelper,
 } from "./utils";
 
 export function generateListPage(model: ModelSpec): void {
@@ -84,7 +85,16 @@ function generateClientList(model: ModelSpec): string {
   const columnDefs: string[] = [];
 
   // Display field column (clickable link, sortable)
-  const displayLabel = listFields.find((f) => f.name === display)?.listLabel || camelToTitle(display);
+  const displayIsId = display === "id";
+  const displayLabel = displayIsId
+    ? model.labelSingular
+    : (listFields.find((f) => f.name === display)?.listLabel || camelToTitle(display));
+  const displayCellContent = displayIsId
+    ? `{row.original.id.slice(0, 8)}`
+    : `{row.getValue("${display}")}`;
+  const displayCellClass = displayIsId
+    ? "font-mono text-xs hover:underline"
+    : "font-medium hover:underline";
   columnDefs.push(`    {
       accessorKey: "${display}",
       header: ({ column }) => (
@@ -98,12 +108,17 @@ function generateClientList(model: ModelSpec): string {
       cell: ({ row }) => (
         <Link
           href={\`/${slug}/\${row.original.id}\`}
-          className="font-medium hover:underline"
+          className="${displayCellClass}"
         >
-          {row.getValue("${display}")}
+          ${displayCellContent}
         </Link>
       ),
     },`);
+
+  // Check if we need the relative time helper
+  const hasDateTimeInList = listFields.some(
+    (f) => f.type === "DateTime" && f.name !== display
+  );
 
   // Other list fields
   for (const field of listFields) {
@@ -124,6 +139,19 @@ function generateClientList(model: ModelSpec): string {
           {row.getValue("${field.name}") as string}
         </Badge>
       ),
+    },`);
+    } else if (field.type === "DateTime") {
+      columnDefs.push(`    {
+      accessorKey: "${field.name}",
+      header: "${label}",
+      cell: ({ row }) => {
+        const val = row.getValue("${field.name}") as string | null;
+        return val ? (
+          <span className="text-muted-foreground text-xs">{formatRelativeTime(val)}</span>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        );
+      },
     },`);
     } else {
       columnDefs.push(`    {
@@ -186,12 +214,12 @@ function generateClientList(model: ModelSpec): string {
   const typeFields = [
     "  id: string;",
     ...model.fields.map((f) => {
-      const tsType = f.type === "String" ? "string" : f.type === "Int" || f.type === "Float" ? "number" : f.type === "Boolean" ? "boolean" : "Date";
+      const tsType = f.type === "String" ? "string" : f.type === "Int" || f.type === "Float" ? "number" : f.type === "Boolean" ? "boolean" : "string";
       const nullable = !f.required ? " | null" : "";
       return `  ${f.name}: ${tsType}${nullable};`;
     }),
-    "  createdAt: Date;",
-    "  updatedAt: Date;",
+    "  createdAt: string;",
+    "  updatedAt: string;",
   ];
   if (model.hasMany.length > 0) {
     const countFields = model.hasMany.map((c) => `${lowerFirst(c)}s: number`).join("; ");
@@ -294,7 +322,7 @@ ${typeFields.join("\n")}
 };
 
 ${colorMaps.join("\n\n")}
-
+${hasDateTimeInList ? "\n" + relativeTimeHelper() + "\n" : ""}
 export function ${name}List() {${stateBlock}
 
   const { data, isLoading } = trpc.${lower}.list.useQuery({});

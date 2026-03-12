@@ -6,6 +6,7 @@ import {
   camelToTitle,
   displayField,
   enumColorMap,
+  relativeTimeHelper,
 } from "./utils";
 
 let _allModels: ModelSpec[] = [];
@@ -70,7 +71,7 @@ function generateDetailServer(model: ModelSpec): string {
     if (field.type === "DateTime") {
       return `              <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">${label}</span>
-                <span>{${lower}.${field.name} ? new Date(${lower}.${field.name}).toLocaleDateString() : "—"}</span>
+                <span className="text-xs">{${lower}.${field.name} ? formatRelativeTime(${lower}.${field.name}) : "—"}</span>
               </div>`;
     }
     if (field.type === "Boolean") {
@@ -148,9 +149,9 @@ function generateDetailServer(model: ModelSpec): string {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Created {new Date(${lower}.createdAt).toLocaleDateString()}
+                Created {formatRelativeTime(${lower}.createdAt)}
                 {${lower}.updatedAt !== ${lower}.createdAt && (
-                  <> · Last updated {new Date(${lower}.updatedAt).toLocaleDateString()}</>
+                  <> · Updated {formatRelativeTime(${lower}.updatedAt)}</>
                 )}
               </p>
             </CardContent>
@@ -187,6 +188,8 @@ import { ${iconImports} } from "lucide-react";${deleteButtonImport}
 
 export const dynamic = "force-dynamic";
 
+${relativeTimeHelper()}
+
 ${colorMapCode.join("\n\n")}
 
 export default async function ${name}DetailPage({
@@ -220,7 +223,11 @@ export default async function ${name}DetailPage({
 ${sidebarFields.join("\n")}
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Created</span>
-                <span>{new Date(${lower}.createdAt).toLocaleDateString()}</span>
+                <span className="text-xs">{formatRelativeTime(${lower}.createdAt)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Updated</span>
+                <span className="text-xs">{formatRelativeTime(${lower}.updatedAt)}</span>
               </div>
             </CardContent>
           </Card>
