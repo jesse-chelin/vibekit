@@ -1,0 +1,18 @@
+{
+  "collapse-filter": false,
+  "search": "",
+  "showTags": true,
+  "showAttachments": false,
+  "hideUnresolved": false,
+  "showOrphans": true,
+  "collapse-color-groups": false,
+  "colorGroups": [
+    { "query": "path:product", "color": { "a": 1, "rgb": 5765887 } },
+    { "query": "path:decisions", "color": { "a": 1, "rgb": 16744448 } },
+    { "query": "path:engineering", "color": { "a": 1, "rgb": 65408 } },
+    { "query": "path:features", "color": { "a": 1, "rgb": 16711935 } }
+  ],
+  "collapse-display": false,
+  "lineSizeMultiplier": 1,
+  "nodeSizeMultiplier": 1
+}

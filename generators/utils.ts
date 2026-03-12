@@ -96,7 +96,7 @@ export function zodType(field: FieldSpec, forUpdate = false): string {
     }
     case "Boolean": {
       let z = "z.boolean()";
-      if (field.defaultEnum !== undefined && !forUpdate) z += `.default(${field.default})`;
+      if (field.default !== undefined && !forUpdate) z += `.default(${field.default})`;
       if (forUpdate || !field.required) z += ".optional()";
       return z;
     }

@@ -12,7 +12,7 @@ Every tool call may require user approval. Excessive approvals destroy the user 
 |-------|--------|-----|
 | State check | 1 | Single bash: check intent.json + APP.md + prereqs |
 | Infrastructure (Steps 1-4) | 1 | Single bash: install + env + db in one command |
-| Domain discovery + competitive research | 1-2 | ONE Task agent (+ optional parallel WebSearch) |
+| Domain discovery + competitive research | 1-2 | ONE Task agent + MANDATORY parallel WebSearch |
 | Interview | 0 | Pure conversation — no tool calls needed |
 | Read guided-setup.md | 1 | One Read call |
 | Write build spec + intent | 2 | Parallel Write calls in one message |
@@ -24,6 +24,7 @@ Every tool call may require user approval. Excessive approvals destroy the user 
 | Final verify + commit | 1 | Single bash command |
 
 **Rules:**
+- NEVER present a build plan without competitive research results. No exceptions. WebSearch is mandatory before any build plan.
 - NEVER run a preliminary command (ls, sqlite3, etc.) before launching a Task agent that does the same thing. Just put it in the agent prompt.
 - NEVER split `pnpm db:push` and `pnpm build` into separate commands. Chain with `&&`.
 - NEVER create files one at a time when you can write 2-4 in parallel.
@@ -76,6 +77,32 @@ From the user's description, identify the category and auto-select:
 **If the user mentions an external system, database, API, or local installation** — STOP and investigate BEFORE proposing features. Use a **SINGLE Task agent call** (subagent_type="Explore") to investigate the system thoroughly. **In the same message**, launch a **WebSearch call** to research competing tools in this space. Two tool calls, one approval — the domain discovery and competitive research happen in parallel.
 
 You cannot propose good features for a system you haven't examined. Invest 2-3 minutes understanding the domain BEFORE proposing what to build. See "Step 1b: Domain Discovery" and "Step 1c: Competitive Research" in the Custom Build Path for full details.
+
+### MANDATORY: Competitive Research (DO NOT SKIP)
+
+You MUST run WebSearch for competitors before presenting the build plan.
+If there is no WebSearch in your tool call history, GO BACK AND DO IT.
+
+For Quick Start: launch a WebSearch in parallel with domain discovery (if external system)
+or immediately after category detection (if standard app). Search for "best [category] tools"
+or "open source [category] dashboard".
+
+The build plan MUST include a COMPETITIVE BASELINE section:
+```
+Based on [competitor1], [competitor2], [competitor3]:
+- Table-stakes included in v1: [list]
+- Table-stakes deferred (with reason): [list]
+```
+
+### 1c. Infer auth need from context
+
+Determine whether auth is needed based on the user's description:
+- "dashboard for my [thing]" / "monitor my [thing]" / "personal [thing]" → `needsAuth: false`
+- "tool for my team" / "app for users" / "SaaS" → `needsAuth: true`
+
+Present in build plan: "Auth: None (personal dashboard)" or "Auth: Sign-in required"
+
+Set `needsAuth` in both `intent.json` and `build-spec.json`.
 
 ### 2. Light validation + auto scope
 
@@ -202,9 +229,11 @@ If the user also provides a GitHub URL, use a parallel WebFetch call alongside t
 
 3. **First-run analysis:** What will the dashboard show when the external system has zero or minimal data? Plan for this explicitly — show setup instructions, connection status, or "waiting for data" states instead of empty tables.
 
-#### Step 1c: Competitive Research
+#### Step 1c: Competitive Research (MANDATORY — DO NOT SKIP)
 
 After domain discovery, BEFORE proposing features, research what exists in this space. This prevents building something that's obviously inferior to free alternatives.
+
+**You MUST run WebSearch for competitors. If there is no WebSearch in your tool call history, GO BACK AND DO IT NOW.** This is a hard gate — no build plan can be presented without competitive research.
 
 **Use a SINGLE WebSearch call** (1 approval). If domain discovery uses a Task agent, launch WebSearch in parallel with it — same message, two tools, one approval.
 
@@ -258,8 +287,7 @@ Conversational, not a checklist. Adapt based on what the user already said in St
 
 - "What do people currently use for this?" (let the user answer first)
 - Claude mentions 1-2 known alternatives from its own knowledge: "I know [X] and [Y] are in this space — have you looked at those?"
-- Only web search if user opts in: "Want me to do a quick search for what else is out there?"
-- Full market research (2.3) stays as a future enhancement
+- WebSearch for competitors was already run in Step 1c (mandatory). Use those findings here to enrich the conversation and validate the user's understanding of the competitive landscape.
 - Capture as array: `["Splitwise (bills only)", "Tody (chores only)", "YNAB (budgets only)"]`
 
 #### Block D — Unique Angle → `uniqueAngle`
@@ -346,7 +374,10 @@ Captures: `mvpFeatures[]`, `v2Features[]`, `needsLandingPage`, `needsPayments`
 
 Now select skills informed by the scope decisions from Step 3. Only ask questions relevant to their category and MVP features — don't dump all 15 options:
 
-- "Will people need accounts?" → Auth is already included
+- "Is this just for you, or will other people use it?"
+  - Personal/local → `needsAuth: false`, skip sign-in entirely
+  - Shared/public → `needsAuth: true` (default)
+- "Will people need accounts?" → Auth is already included (if `needsAuth: true`)
 - "Will you charge money?" → stripe skill (only if `needsPayments` is true from Step 3)
 - "Do you want AI features?" → "Should the AI run on your computer (free, private) or in the cloud (small cost per use)?" → ollama / cloud-llm
 - "Will people upload files?" → file-uploads skill
@@ -365,7 +396,7 @@ Before moving on, present the selected skills. Enforce the 3-skill max from Step
 Based on what you've told me, here's what I'll set up:
 
 Included by default:
-- Authentication (accounts, sign-in, sign-up)
+- Authentication (accounts, sign-in, sign-up)    ← omit if needsAuth: false
 - Dashboard with stats
 - Settings page
 
@@ -560,6 +591,8 @@ Save the chosen vibe to `.vibekit/intent.json`:
 
 Present the complete build manifest before any code generation. This replaces the old final confirmation — it's comprehensive, not abbreviated.
 
+**The build plan MUST include a COMPETITIVE BASELINE section.** If you haven't run WebSearch for competitive research yet, STOP and do it now before presenting this plan.
+
 ```
 Here's the complete build plan for [App Name]:
 
@@ -571,6 +604,14 @@ TARGET USER
 
 UNIQUE ANGLE
 [One sentence from Step 2]
+
+COMPETITIVE BASELINE
+Based on [competitor1], [competitor2], [competitor3]:
+- Table-stakes included in v1: [list]
+- Table-stakes deferred (with reason): [list]
+
+AUTH
+[Auth: None (personal dashboard)] or [Auth: Sign-in required]
 
 WHAT I'LL BUILD
 
@@ -606,6 +647,35 @@ Approve this plan, or tell me what to change.
 ```
 
 **CRITICAL:** Claude must NOT generate any code until the user explicitly approves the build plan. If the user requests changes, update the plan and re-present it. Only proceed to Step 10 after clear approval (e.g., "looks good", "approved", "let's go", "build it").
+
+#### Save Intent
+
+After approval, save interview results to `.vibekit/intent.json`:
+```json
+{
+  "appName": "[name]",
+  "category": "[category]",
+  "categoryLabel": "[human-readable category]",
+  "description": "[one-sentence app description]",
+  "targetUser": "[who the app is for]",
+  "problem": "[what problem it solves]",
+  "competitors": ["[competitor 1]", "[competitor 2]"],
+  "uniqueAngle": "[what makes this different]",
+  "mvpFeatures": ["[feature 1]", "[feature 2]", "[feature 3]"],
+  "v2Features": ["[deferred feature 1]", "[deferred feature 2]"],
+  "needsAuth": true,
+  "needsLandingPage": false,
+  "needsPayments": false,
+  "skills": ["list", "of", "selected", "skills"],
+  "models": ["[Model1]", "[Model2]", "[Model3]"],
+  "pages": ["Dashboard", "[Entity] List", "[Entity] Detail", "Settings"],
+  "vibe": "[friendly|professional|creative|bold|minimal|custom]",
+  "primaryColor": "[hex color]",
+  "setupDate": "[ISO timestamp]",
+  "interviewComplete": true,
+  "buildApproved": true
+}
+```
 
 ---
 
@@ -716,35 +786,19 @@ Always include these entries in order:
 
 ##### Worked Example
 
-For a household management app with three models (from the interview):
+For a task management app (showing one model with all field types — repeat this pattern per model):
 
 ```json
 {
-  "appName": "HomeBase",
+  "appName": "TaskFlow",
   "models": [
     {
-      "name": "Household",
-      "slug": "households",
-      "label": "Households",
-      "labelSingular": "Household",
-      "icon": "Home",
-      "iconColor": "text-blue-500",
-      "fields": [
-        { "name": "name", "type": "String", "required": true, "maxLength": 255, "showInList": true },
-        { "name": "description", "type": "String", "required": false, "maxLength": 1000 }
-      ],
-      "belongsTo": [],
-      "hasMany": ["Chore", "Bill"],
-      "searchFields": ["name", "description"],
-      "defaultSort": "updatedAt"
-    },
-    {
-      "name": "Chore",
-      "slug": "chores",
-      "label": "Chores",
-      "labelSingular": "Chore",
+      "name": "Task",
+      "slug": "tasks",
+      "label": "Tasks",
+      "labelSingular": "Task",
       "icon": "CheckSquare",
-      "iconColor": "text-emerald-500",
+      "iconColor": "text-blue-500",
       "fields": [
         { "name": "title", "type": "String", "required": true, "maxLength": 255, "showInList": true },
         { "name": "description", "type": "String", "required": false, "maxLength": 2000 },
@@ -752,40 +806,20 @@ For a household management app with three models (from the interview):
         { "name": "priority", "type": "String", "required": false, "enum": ["low", "medium", "high"], "defaultEnum": "medium", "showInList": true },
         { "name": "dueDate", "type": "DateTime", "required": false }
       ],
-      "belongsTo": [{ "model": "Household", "field": "householdId" }],
+      "belongsTo": [],
       "hasMany": [],
       "searchFields": ["title", "description"],
-      "defaultSort": "updatedAt"
-    },
-    {
-      "name": "Bill",
-      "slug": "bills",
-      "label": "Bills",
-      "labelSingular": "Bill",
-      "icon": "Receipt",
-      "iconColor": "text-amber-500",
-      "fields": [
-        { "name": "title", "type": "String", "required": true, "maxLength": 255, "showInList": true },
-        { "name": "amount", "type": "Float", "required": true, "showInList": true, "listLabel": "Amount" },
-        { "name": "status", "type": "String", "required": false, "enum": ["pending", "paid", "overdue"], "defaultEnum": "pending", "showInList": true },
-        { "name": "dueDate", "type": "DateTime", "required": false }
-      ],
-      "belongsTo": [{ "model": "Household", "field": "householdId" }],
-      "hasMany": [],
-      "searchFields": ["title"],
       "defaultSort": "updatedAt"
     }
   ],
   "sidebar": [
     { "title": "Dashboard", "href": "/dashboard", "icon": "LayoutDashboard" },
-    { "title": "Households", "href": "/households", "icon": "Home" },
-    { "title": "Chores", "href": "/chores", "icon": "CheckSquare" },
-    { "title": "Bills", "href": "/bills", "icon": "Receipt" },
+    { "title": "Tasks", "href": "/tasks", "icon": "CheckSquare" },
     { "title": "Settings", "href": "/settings", "icon": "Settings" }
   ],
   "dashboard": {
-    "description": "Welcome back! Here's your household overview.",
-    "recentEntity": "Chore"
+    "description": "Welcome back! Here's your task overview.",
+    "recentEntity": "Task"
   },
   "settings": {
     "tabs": [
@@ -795,7 +829,7 @@ For a household management app with three models (from the interview):
 }
 ```
 
-**What this produces:** 3 Prisma models with relations and indexes, 3 tRPC routers (15 procedures), 13 pages (list + detail + create + edit per model + dashboard), sidebar with 5 nav items, and seed data — all in seconds.
+For multi-model apps, add more entries to `models` (with `belongsTo`/`hasMany` for relationships), `sidebar`, and update `dashboard.recentEntity` to the most active entity.
 
 **Verify**: The build-spec is valid JSON and all model names referenced in `belongsTo`, `hasMany`, `sidebar`, and `dashboard.recentEntity` match actual model names in the spec.
 
@@ -862,6 +896,15 @@ What the generators produce:
 
 The generators produce functional CRUD scaffolding. This step elevates it from "works" to "impresses." The user's expectation is that the output EXCEEDS what they imagined — not that they have to troubleshoot or feel underwhelmed. Spend real effort here.
 
+#### Customization Pass Budget: 15 approvals maximum
+
+1. Read all generated files in ONE pass (1-2 approvals): parallel Reads or single Task agent
+2. Write all router implementations in one message (1-2 approvals): parallel Edits
+3. Write all customizations per page in one message (1 approval per page)
+4. Apply branding in one message (1 approval): globals.css + constants
+
+If you exceed 15 approvals for customization, you're being too incremental.
+
 ##### What to customize:
 
 - **Business logic** — Custom validation rules, computed fields, non-standard workflows
@@ -875,6 +918,12 @@ The generators produce functional CRUD scaffolding. This step elevates it from "
 ##### Feature Richness Checklist (MANDATORY)
 
 The generators produce bare CRUD. The customization pass must elevate every page. Go through each category and add what's relevant:
+
+**Loading skeletons must match the actual page layout:**
+- If you rewrite a list page from DataTable to cards, update loading.tsx to card skeletons
+- If you add a chart to the dashboard, add a chart skeleton to loading.tsx
+- The skeleton should be visually indistinguishable from the page at a glance
+- Every time you change a page's layout during customization, update its loading.tsx in the same message
 
 **Dashboard must feel alive and useful:**
 - Stat cards with colored icons, trends or context (not just raw numbers — add "↑ 3 this week" or "12 pending")
@@ -989,6 +1038,16 @@ ROOT=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 2>/dev/null)
 DASH=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/dashboard 2>/dev/null)
 echo "Root: $ROOT (expect 200 or 302/307)"
 echo "Dashboard: $DASH (expect 200 or 302/307)"
+
+# If needsAuth is false: verify dashboard loads directly, not redirect to sign-in
+if [[ "$DASH" =~ ^(302|307)$ ]]; then
+  LOCATION=$(curl -s -o /dev/null -w "%{redirect_url}" http://localhost:3000/dashboard 2>/dev/null)
+  if echo "$LOCATION" | grep -q "sign-in"; then
+    echo "Dashboard redirects to sign-in — check if this is a no-auth app!"
+    echo "If needsAuth is false in build-spec.json, this is a BUG. FIX IT."
+  fi
+fi
+
 kill $DEV_PID 2>/dev/null
 wait $DEV_PID 2>/dev/null
 if [[ "$ROOT" =~ ^(200|302|307)$ ]] && [[ "$DASH" =~ ^(200|302|307)$ ]]; then
@@ -1022,85 +1081,10 @@ Create the `docs/` Obsidian vault with real content from the interview and build
 
 ##### 10h-1. Create `.obsidian/` config
 
-Create these files for a ready-to-open Obsidian vault:
+Copy the Obsidian config templates into `docs/.obsidian/`:
 
-**`docs/.obsidian/app.json`:**
-```json
-{
-  "showLineCount": true,
-  "strictLineBreaks": true,
-  "showFrontmatter": false,
-  "livePreview": true,
-  "defaultViewMode": "preview",
-  "readableLineLength": true,
-  "showInlineTitle": true,
-  "tabSize": 2,
-  "attachmentFolderPath": "assets",
-  "newFileLocation": "folder",
-  "newFileFolderPath": "features"
-}
-```
-
-**`docs/.obsidian/appearance.json`:**
-```json
-{
-  "baseFontSize": 16,
-  "interfaceFontSize": 14,
-  "cssTheme": "",
-  "theme": "obsidian"
-}
-```
-
-**`docs/.obsidian/core-plugins.json`:**
-```json
-{
-  "file-explorer": true,
-  "global-search": true,
-  "graph-view": true,
-  "backlink": true,
-  "outgoing-link": true,
-  "tag-pane": true,
-  "page-preview": true,
-  "command-palette": true,
-  "editor-status": true,
-  "starred": true,
-  "outline": true,
-  "templates": false,
-  "daily-notes": false,
-  "word-count": true,
-  "file-recovery": true,
-  "workspaces": false,
-  "note-composer": false,
-  "audio-recorder": false,
-  "canvas": false,
-  "publish": false,
-  "sync": false,
-  "slides": false,
-  "switcher": true,
-  "properties": true
-}
-```
-
-**`docs/.obsidian/graph.json`:**
-```json
-{
-  "collapse-filter": false,
-  "search": "",
-  "showTags": true,
-  "showAttachments": false,
-  "hideUnresolved": false,
-  "showOrphans": true,
-  "collapse-color-groups": false,
-  "colorGroups": [
-    { "query": "path:product", "color": { "a": 1, "rgb": 5765887 } },
-    { "query": "path:decisions", "color": { "a": 1, "rgb": 16744448 } },
-    { "query": "path:engineering", "color": { "a": 1, "rgb": 65408 } },
-    { "query": "path:features", "color": { "a": 1, "rgb": 16711935 } }
-  ],
-  "collapse-display": false,
-  "lineSizeMultiplier": 1,
-  "nodeSizeMultiplier": 1
-}
+```bash
+mkdir -p docs/.obsidian && cp .claude/templates/obsidian/*.json docs/.obsidian/
 ```
 
 Do NOT create `workspace.json` — Obsidian generates it on first open.
@@ -1283,46 +1267,11 @@ gh repo create [app-name] --private --source=. --push
 
 ### Non-Standard Apps
 
-Not every app fits the standard CRUD pattern. If the user describes something that doesn't map cleanly to "create/read/update/delete entities" — such as a monitoring dashboard, an external database viewer, a tool that wraps an existing API, or a read-only analytics app — the generators may not apply. Adapt the build flow:
+Not every app fits the standard CRUD pattern — monitoring dashboards, external database viewers, API wrappers, read-only analytics. The generators still apply — use `dataSource: "external"` and `readOnly: true` in the build spec (see Step 10a "External Data Source Build Specs"). The generators produce tRPC router stubs, pages, and the `src/lib/external-db.ts` connection module automatically.
 
 #### When to skip generators
 
-Skip `10b` (generators) when:
-- The app reads from an external database instead of its own Prisma DB
-- The app is primarily a dashboard/viewer with no create/edit flows
-- The data model doesn't map to standard user-owned entities
-- The app wraps an external API or service
-
-#### External database apps
-
-When the app needs to read from an external database (another app's SQLite, Postgres, etc.):
-
-**Setup:**
-- Install `better-sqlite3` (for SQLite) or the appropriate client package
-- Create a connection module in `src/lib/` that opens the connection ONCE at module level
-- **CRITICAL:** If the connection is read-only, do NOT set WAL pragma or any write-mode pragma. `db.pragma("journal_mode = WAL")` will throw `SQLITE_READONLY` on a read-only connection.
-- Create TypeScript interfaces for every table/view being read
-- Handle the case where the external DB file doesn't exist — return a clear error, don't crash
-
-**Data flow — still use tRPC:**
-- Create tRPC routers that wrap external DB queries
-- The frontend uses `trpc.x.useQuery()` just like any other page
-- This keeps the HydrateClient/prefetch patterns working
-- Add proper error handling for connection failures
-
-**Read-only SQLite pattern:**
-```typescript
-import Database from "better-sqlite3";
-import { existsSync } from "fs";
-
-const DB_PATH = process.env.EXTERNAL_DB_PATH || "/path/to/external.db";
-
-function getDb(): Database.Database | null {
-  if (!existsSync(DB_PATH)) return null;
-  return new Database(DB_PATH, { readonly: true });
-  // NO pragma("journal_mode = WAL") — read-only!
-}
-```
+Only skip generators when the app has NO entity-based pages at all (e.g., a single-page tool with no list/detail pattern). This is rare. For external database apps, **use the generators** with `dataSource: "external"` — they handle router stubs, read-only pages, and connection setup.
 
 #### Dashboard-focused apps
 
@@ -1333,17 +1282,6 @@ For apps that are primarily dashboards (monitoring, analytics, status views):
 - Group related metrics with clear section headers
 - Use the `charts` skill if data visualization adds value
 - Add drill-down: clicking a metric should navigate to a detailed view
-
-#### Quality bar for non-standard apps
-
-Even when skipping generators, maintain the SAME quality bar:
-- Every page needs `loading.tsx` with layout-matching skeletons
-- Every data view needs an empty state and error state
-- Use the same component library (shadcn/ui, PageHeader, EmptyState, etc.)
-- Follow the same spacing rules (`p-4 md:p-6`, `space-y-6`)
-- Use the HydrateClient pattern for pages with client interactivity
-- Apply the chosen vibe palette
-- **All the Feature Richness Checklist items from Step 10e still apply**
 
 ### Programmatic Verification (run before the manual checklist)
 
@@ -1366,25 +1304,16 @@ If any check fails, fix it before continuing. Do not ship stubs or unused skills
 
 ### Post-Build Verification (MANDATORY)
 
-After building, verify EVERY generated page against this checklist:
+Verify EVERY generated page against CLAUDE.md's **Page Completeness Checklist** (loading, empty, error, mobile, spacing, data resilience). Additionally check these build-specific items:
 
 | Check | How to Verify |
 |-------|---------------|
-| Loading state | Does `loading.tsx` exist? Does its skeleton match the page layout? |
-| Empty state | What happens with zero data? Is there a helpful EmptyState with action button? |
-| Error state | What happens when the API fails? Is there a retry button? |
-| Mobile layout | Does it look right at 375px? No overflow? Touch targets ≥ 44px? |
-| Consistent spacing | Is page padding `p-4 md:p-6`? Are sections `space-y-6`? |
-| Data propagation | After mutations, do all affected pages update? |
 | Navigation | Is the page in the sidebar? Can the user get there and back? |
 | First-run experience | What does a brand new user see? Is it helpful, not empty? |
-| Long text | What happens with a 200-character name? Does it truncate or break the layout? |
-| Missing fields | If optional fields are empty, is there a blank gap or graceful fallback? |
-| Many items | With 100+ items, is there pagination? Or does the page choke? |
-| Single item | Does a 1-item list/grid still look right? No weird empty columns? |
+| Skill integration | Is every installed skill actually used by at least one page? |
 | Rapid clicks | If you click "Create" 5 times fast, does it create 5 duplicates? Buttons should disable during async. |
 
-If ANY check fails, fix it immediately. Do not move on to the next page.
+If ANY check fails, fix it immediately.
 
 ### Self-Assessment (MANDATORY — do this BEFORE showing the summary)
 
@@ -1459,22 +1388,12 @@ Everything is documented in APP.md (quick reference) and the docs/ vault (deep r
 | Role-based access | rbac |
 | Multi-language | i18n |
 
-## Common Pitfalls (from real projects)
+## Common Pitfalls (setup-specific)
 
-These are the mistakes people actually make. Avoid them:
+Most quality rules are in CLAUDE.md (Page Completeness, Hard Constraints, Design Rules). These are additional pitfalls specific to the `/setup` flow:
 
-1. **Skipping empty states** — "I'll add those later." You won't. Every list/table needs one from day 1.
-2. **Inconsistent padding** — One page uses `p-3`, another `p-6`, another `p-4`. Use `p-4 md:p-6` everywhere.
-3. **Missing loading skeletons** — White flash or spinner instead of layout-matching skeleton. Create `loading.tsx` for every page.
-4. **Forgetting data propagation** — User creates an item, navigates to dashboard, dashboard still shows old count. Invalidate ALL affected queries.
-5. **Desktop-first layout** — Looks great on desktop, broken on mobile. Start with 375px, add breakpoints up.
-6. **No error handling** — API fails → blank page. Every fetch needs an error state with retry.
-7. **Onboarding as afterthought** — First-run experience should be designed first, not bolted on after launch.
-8. **Hover-only interactions** — Tooltips, dropdowns, actions only visible on hover. Mobile users can't hover.
-9. **Building without a plan** — Jumping straight to code without confirming models, pages, and skills leads to rework. Always present the plan first.
-10. **Skipping verification checkpoints** — "It probably works" is not verification. Run the build, check the states, test the flow.
-11. **Passing functions across server/client boundary** — Lucide icons are React components (functions). You CANNOT pass them as props from a server component to a client component — Next.js will throw "Functions cannot be passed directly to Client Components." Fix: (a) use HydrateClient pattern so the client component renders everything including icons, (b) pass icon names as strings and map to components in the client, or (c) import icons directly in the client component. See CLAUDE.md "Server/Client Boundary" section.
-12. **WAL pragma on read-only databases** — If connecting to an external SQLite database with `{ readonly: true }`, do NOT call `db.pragma("journal_mode = WAL")` or any write-mode pragma. It will throw `SQLITE_READONLY`. Skip all write pragmas for read-only connections entirely.
-13. **Interactive CLI tools during build** — Commands like `pnpm approve-builds` show interactive TUIs that Claude Code cannot drive. Always check for `--yes` or `--non-interactive` flags. If none exist, warn the user and let them run it manually.
-14. **Bare minimum output** — Building functional-but-sparse pages is not enough. Users expect to be IMPRESSED, not just unblocked. A dashboard with four zero-value stat cards and an empty recent list is disappointing. Add first-run guidance, smart defaults, contextual help, and polish. See the Feature Richness Checklist in Step 10e.
-15. **Excessive codebase exploration** — Don't spend 50+ tool calls reading every file in the repo before starting to build. Read CLAUDE.md, APP.md, and the specific files you need. The documentation is designed to give you everything you need without reading every source file.
+1. **Building without a plan** — Always present the build plan (Step 9) and get explicit approval before generating code.
+2. **Bare minimum output** — Functional-but-sparse pages are not enough. Users expect to be IMPRESSED. See the Feature Richness Checklist in Step 10e.
+3. **Interactive CLI tools during build** — Commands like `pnpm approve-builds` show interactive TUIs that Claude Code cannot drive. Use `--yes` or `--non-interactive` flags. If none exist, warn the user.
+4. **Excessive codebase exploration** — Don't read every file in the repo. CLAUDE.md and `.claude/docs/` have everything you need. Only read specific source files when modifying or debugging them.
+5. **Skipping competitive research** — Every build plan needs a COMPETITIVE BASELINE. No exceptions.

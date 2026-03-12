@@ -1,0 +1,13 @@
+{
+  "showLineCount": true,
+  "strictLineBreaks": true,
+  "showFrontmatter": false,
+  "livePreview": true,
+  "defaultViewMode": "preview",
+  "readableLineLength": true,
+  "showInlineTitle": true,
+  "tabSize": 2,
+  "attachmentFolderPath": "assets",
+  "newFileLocation": "folder",
+  "newFileFolderPath": "features"
+}

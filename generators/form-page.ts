@@ -163,8 +163,6 @@ function generateCreatePage(model: ModelSpec): string {
   const hasTextarea = model.fields.some((f) => f.type === "String" && f.maxLength && f.maxLength > 500);
   const hasEnum = model.fields.some((f) => f.enum);
   const hasBoolean = model.fields.some((f) => f.type === "Boolean");
-  const hasNumber = model.fields.some((f) => f.type === "Int" || f.type === "Float");
-
   const uiImports = [
     'import { Button } from "@/components/ui/button";',
     'import { Input } from "@/components/ui/input";',

@@ -29,8 +29,9 @@ export function generateTrpcRouters(spec: BuildSpec): void {
   // Update user.ts stats procedure
   generateUserStats(spec);
 
+  const procedureCount = spec.models.reduce((sum, m) => sum + (m.readOnly ? 2 : 5), 0);
   console.log(
-    `  ✓ tRPC routers: ${spec.models.length} routers (${spec.models.length * 5} procedures)`
+    `  ✓ tRPC routers: ${spec.models.length} routers (${procedureCount} procedures)`
   );
 }
 
@@ -38,6 +39,7 @@ function generateRouter(model: ModelSpec, allModels: ModelSpec[]): string {
   const name = model.name;
   const lower = lowerFirst(name);
   const display = displayField(model.fields);
+  const readOnly = model.readOnly === true;
   const searchFields = model.searchFields.length > 0 ? model.searchFields : [display];
 
   // Collect enum fields for list input
@@ -71,69 +73,6 @@ function generateRouter(model: ModelSpec, allModels: ModelSpec[]): string {
     ? `\n        include: {\n${byIdIncludes.join("\n")}\n        },`
     : "";
 
-  // Build create input fields
-  const createFields = model.fields
-    .map((f) => `      ${f.name}: ${zodType(f)},`)
-    .join("\n");
-
-  // Add belongsTo FK fields to create input
-  const createFkFields = model.belongsTo
-    .map((rel) => `      ${rel.field}: z.string(),`)
-    .join("\n");
-
-  // Build update input fields (all optional)
-  const updateFields = model.fields
-    .map((f) => `      ${f.name}: ${zodType(f, true)},`)
-    .join("\n");
-
-  // Build create data spread (handle DateTime conversion)
-  const dateTimeFields = model.fields.filter((f) => f.type === "DateTime");
-  let createDataSpread: string;
-  if (dateTimeFields.length > 0) {
-    const dtDestructure = dateTimeFields.map((f) => f.name).join(", ");
-    const dtConversions = dateTimeFields
-      .map((f) => `        ...(${f.name} && { ${f.name}: new Date(${f.name}) }),`)
-      .join("\n");
-    createDataSpread = `      const { ${dtDestructure}, ...rest } = input;
-      return ctx.db.${lower}.create({
-        data: {
-          ...rest,
-${dtConversions}
-          userId: ctx.session.user.id,
-        },
-      });`;
-  } else {
-    createDataSpread = `      return ctx.db.${lower}.create({
-        data: { ...input, userId: ctx.session.user.id },
-      });`;
-  }
-
-  // Build update data spread
-  let updateDataSpread: string;
-  if (dateTimeFields.length > 0) {
-    const dtDestructure = dateTimeFields.map((f) => f.name).join(", ");
-    const dtConversions = dateTimeFields
-      .map(
-        (f) =>
-          `        ...(${f.name} !== undefined && { ${f.name}: ${f.name} ? new Date(${f.name}) : null }),`
-      )
-      .join("\n");
-    updateDataSpread = `      const { id, ${dtDestructure}, ...data } = input;
-      return ctx.db.${lower}.update({
-        where: { id, userId: ctx.session.user.id },
-        data: {
-          ...data,
-${dtConversions}
-        },
-      });`;
-  } else {
-    updateDataSpread = `      const { id, ...data } = input;
-      return ctx.db.${lower}.update({
-        where: { id, userId: ctx.session.user.id },
-        data,
-      });`;
-  }
-
   // Enum filter inputs
   const enumInputs = enumFields
     .map((f) => {
@@ -151,6 +90,105 @@ ${dtConversions}
   const enumDestructure = enumFields.length > 0
     ? enumFields.map((f) => f.name).join(", ") + ", "
     : "";
+
+  // Mutation procedures (only for non-readOnly models)
+  let mutationProcedures = "";
+  if (!readOnly) {
+    // Build create input fields
+    const createFields = model.fields
+      .map((f) => `      ${f.name}: ${zodType(f)},`)
+      .join("\n");
+
+    // Add belongsTo FK fields to create input
+    const createFkFields = model.belongsTo
+      .map((rel) => `      ${rel.field}: z.string(),`)
+      .join("\n");
+
+    // Build update input fields (all optional)
+    const updateFields = model.fields
+      .map((f) => `      ${f.name}: ${zodType(f, true)},`)
+      .join("\n");
+
+    // Build create data spread (handle DateTime conversion)
+    const dateTimeFields = model.fields.filter((f) => f.type === "DateTime");
+    let createDataSpread: string;
+    if (dateTimeFields.length > 0) {
+      const dtDestructure = dateTimeFields.map((f) => f.name).join(", ");
+      const dtConversions = dateTimeFields
+        .map((f) => `        ...(${f.name} && { ${f.name}: new Date(${f.name}) }),`)
+        .join("\n");
+      createDataSpread = `      const { ${dtDestructure}, ...rest } = input;
+      return ctx.db.${lower}.create({
+        data: {
+          ...rest,
+${dtConversions}
+          userId: ctx.session.user.id,
+        },
+      });`;
+    } else {
+      createDataSpread = `      return ctx.db.${lower}.create({
+        data: { ...input, userId: ctx.session.user.id },
+      });`;
+    }
+
+    // Build update data spread
+    let updateDataSpread: string;
+    if (dateTimeFields.length > 0) {
+      const dtDestructure = dateTimeFields.map((f) => f.name).join(", ");
+      const dtConversions = dateTimeFields
+        .map(
+          (f) =>
+            `        ...(${f.name} !== undefined && { ${f.name}: ${f.name} ? new Date(${f.name}) : null }),`
+        )
+        .join("\n");
+      updateDataSpread = `      const { id, ${dtDestructure}, ...data } = input;
+      return ctx.db.${lower}.update({
+        where: { id, userId: ctx.session.user.id },
+        data: {
+          ...data,
+${dtConversions}
+        },
+      });`;
+    } else {
+      updateDataSpread = `      const { id, ...data } = input;
+      return ctx.db.${lower}.update({
+        where: { id, userId: ctx.session.user.id },
+        data,
+      });`;
+    }
+
+    mutationProcedures = `
+
+  create: protectedProcedure
+    .input(
+      z.object({
+${createFields}
+${createFkFields}
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+${createDataSpread}
+    }),
+
+  update: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+${updateFields}
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+${updateDataSpread}
+    }),
+
+  delete: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      return ctx.db.${lower}.delete({
+        where: { id: input.id, userId: ctx.session.user.id },
+      });
+    }),`;
+  }
 
   return `import { z } from "zod/v4";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
@@ -204,37 +242,7 @@ ${searchOr}
       });
       if (!${lower}) throw new Error("${name} not found");
       return ${lower};
-    }),
-
-  create: protectedProcedure
-    .input(
-      z.object({
-${createFields}
-${createFkFields}
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-${createDataSpread}
-    }),
-
-  update: protectedProcedure
-    .input(
-      z.object({
-        id: z.string(),
-${updateFields}
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-${updateDataSpread}
-    }),
-
-  delete: protectedProcedure
-    .input(z.object({ id: z.string() }))
-    .mutation(async ({ ctx, input }) => {
-      return ctx.db.${lower}.delete({
-        where: { id: input.id, userId: ctx.session.user.id },
-      });
-    }),
+    }),${mutationProcedures}
 });
 `;
 }

@@ -6,6 +6,10 @@ import { resolvePath, writeFile } from "./utils";
  * - logo.tsx — branded with spec.appName
  * - search-command.tsx — routes from spec.sidebar + actions for mutable models
  * - src/app/page.tsx — redirect to /dashboard
+ * - src/lib/constants.ts — app name and description
+ * - settings/layout.tsx — only relevant tabs
+ * - settings/general/page.tsx — no stub preferences
+ * - middleware.ts + auth.ts — auth bypass for local apps
  */
 
 export function generateAppChrome(spec: BuildSpec): void {
@@ -18,7 +22,21 @@ export function generateAppChrome(spec: BuildSpec): void {
     generateSearchCommand(spec)
   );
   writeFile(resolvePath("src", "app", "page.tsx"), generateRootRedirect());
-  console.log("  ✓ App chrome (logo, search command, root redirect)");
+  writeFile(resolvePath("src", "lib", "constants.ts"), generateConstants(spec));
+  writeFile(
+    resolvePath("src", "app", "(app)", "settings", "layout.tsx"),
+    generateSettingsLayout(spec)
+  );
+  writeFile(
+    resolvePath("src", "app", "(app)", "settings", "general", "page.tsx"),
+    generateSettingsGeneral()
+  );
+
+  if (spec.needsAuth === false) {
+    generateAuthBypass(spec);
+  }
+
+  console.log("  ✓ App chrome (logo, search, redirect, constants, settings)");
 }
 
 function generateLogo(spec: BuildSpec): string {
@@ -151,4 +169,269 @@ export default function Home() {
   redirect("/dashboard");
 }
 `;
+}
+
+function generateConstants(spec: BuildSpec): string {
+  return `export const APP_NAME = "${spec.appName}";
+export const APP_DESCRIPTION = "${spec.dashboard.description.replace(/"/g, '\\"')}";
+export const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+export const AUTH_ROUTES = ["/sign-in", "/sign-up", "/forgot-password"];
+export const PUBLIC_ROUTES = ["/", "/api/health", "/api/auth"${spec.needsAuth === false ? ', "/dashboard"' : ""}];
+export const DEFAULT_REDIRECT = "/dashboard";
+
+export const PAGINATION = {
+  DEFAULT_PAGE_SIZE: 20,
+  MAX_PAGE_SIZE: 100,
+} as const;
+
+export const RATE_LIMIT = {
+  WINDOW_MS: 60 * 1000,
+  MAX_REQUESTS: 100,
+  AUTH_MAX_REQUESTS: 10,
+} as const;
+`;
+}
+
+function generateSettingsLayout(spec: BuildSpec): string {
+  const tabs: { label: string; href: string }[] = [
+    { label: "General", href: "/settings/general" },
+  ];
+
+  const skills = spec.skills ?? [];
+  if (skills.includes("stripe")) {
+    tabs.push({ label: "Billing", href: "/settings/billing" });
+  }
+  if (skills.includes("rbac")) {
+    tabs.push({ label: "Team", href: "/settings/team" });
+  }
+
+  const tabsJson = JSON.stringify(tabs, null, 2).replace(/\n/g, "\n  ");
+
+  return `import { PageHeader } from "@/components/layout/page-header";
+import { SettingsLayout } from "@/components/patterns/settings-layout";
+
+const settingsTabs = ${tabsJson};
+
+export default function SettingsPageLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-6">
+      <PageHeader title="Settings" description="Manage your account and preferences." />
+      <SettingsLayout tabs={settingsTabs}>{children}</SettingsLayout>
+    </div>
+  );
+}
+`;
+}
+
+function generateSettingsGeneral(): string {
+  return `"use client";
+
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod/v4";
+import { trpc } from "@/trpc/client";
+import { FormSection } from "@/components/patterns/form-section";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
+
+const profileSchema = z.object({
+  name: z.string().min(1, "Name is required").max(100),
+});
+
+type ProfileInput = z.infer<typeof profileSchema>;
+
+export default function GeneralSettingsPage() {
+  const { data: user, isLoading, error } = trpc.user.me.useQuery();
+
+  const form = useForm<ProfileInput>({
+    resolver: zodResolver(profileSchema),
+    values: user ? { name: user.name ?? "" } : undefined,
+  });
+
+  const utils = trpc.useUtils();
+
+  const updateUser = trpc.user.update.useMutation({
+    onSuccess: () => {
+      void utils.user.me.invalidate();
+      toast.success("Profile updated!");
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="space-y-8">
+        <div className="space-y-6">
+          <div>
+            <Skeleton className="h-5 w-16" />
+            <Skeleton className="mt-1 h-4 w-48" />
+          </div>
+          <Skeleton className="h-px w-full" />
+          <div className="max-w-2xl space-y-4">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-12" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-12" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <Skeleton className="h-10 w-28" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="py-8 text-center">
+        <p className="text-sm text-muted-foreground">
+          Something went wrong loading your settings.
+        </p>
+        <Button
+          variant="outline"
+          className="mt-4"
+          onClick={() => window.location.reload()}
+        >
+          Try Again
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8">
+      <form onSubmit={form.handleSubmit((data) => updateUser.mutate(data))}>
+        <FormSection
+          title="Profile"
+          description="Update your personal information."
+        >
+          <div className="space-y-2">
+            <Label htmlFor="name">Name</Label>
+            <Input id="name" {...form.register("name")} />
+            {form.formState.errors.name && (
+              <p className="text-sm text-destructive">
+                {form.formState.errors.name.message}
+              </p>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={user?.email ?? ""}
+              disabled
+              className="opacity-60"
+            />
+            <p className="text-xs text-muted-foreground">
+              Email cannot be changed.
+            </p>
+          </div>
+          <Button type="submit" disabled={updateUser.isPending}>
+            {updateUser.isPending && (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            )}
+            {updateUser.isPending ? "Saving..." : "Save Changes"}
+          </Button>
+        </FormSection>
+      </form>
+    </div>
+  );
+}
+`;
+}
+
+function generateAuthBypass(spec: BuildSpec): void {
+  // Rewrite middleware to always pass through
+  writeFile(
+    resolvePath("src", "middleware.ts"),
+    `import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+
+// Auth bypassed — this is a personal/local app (needsAuth: false)
+export default function middleware(_req: NextRequest) {
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|fonts|og-image.png).*)",
+  ],
+};
+`
+  );
+
+  // Rewrite auth.ts without PrismaAdapter (conflicts with Credentials+JWT when auth is bypassed)
+  writeFile(
+    resolvePath("src", "lib", "auth.ts"),
+    `import NextAuth from "next-auth";
+import Credentials from "next-auth/providers/credentials";
+import { db } from "@/lib/db";
+
+// Auth is present but not enforced (needsAuth: false — personal/local app).
+// Middleware does not redirect to sign-in. This config exists so tRPC
+// session helpers don't crash if auth utilities are imported elsewhere.
+export const { handlers, auth, signIn, signOut } = NextAuth({
+  session: { strategy: "jwt" },
+  pages: {
+    signIn: "/sign-in",
+    error: "/sign-in",
+  },
+  providers: [
+    Credentials({
+      name: "credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email) return null;
+
+        const user = await db.user.findUnique({
+          where: { email: credentials.email as string },
+        });
+
+        if (!user) return null;
+
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          image: user.image,
+        };
+      },
+    }),
+  ],
+  callbacks: {
+    async session({ session, token }) {
+      if (token.sub && session.user) {
+        session.user.id = token.sub;
+      }
+      return session;
+    },
+    async jwt({ token, user }) {
+      if (user) {
+        token.sub = user.id;
+      }
+      return token;
+    },
+  },
+});
+`
+  );
+
+  console.log("  ✓ Auth bypass (middleware + auth.ts rewritten for no-auth)");
 }

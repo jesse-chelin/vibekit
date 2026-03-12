@@ -4,12 +4,38 @@ import { resolvePath, writeFile, lowerFirst, iconColor } from "./utils";
 const DASHBOARD_DIR = resolvePath("src", "app", "(app)", "dashboard");
 
 export function generateDashboard(spec: BuildSpec): void {
-  writeFile(`${DASHBOARD_DIR}/page.tsx`, generateDashboardPage(spec));
+  writeFile(`${DASHBOARD_DIR}/page.tsx`, generateDashboardServer(spec));
+  writeFile(`${DASHBOARD_DIR}/_components/dashboard-content.tsx`, generateDashboardClient(spec));
   writeFile(`${DASHBOARD_DIR}/loading.tsx`, generateDashboardLoading(spec));
   console.log("  ✓ Dashboard page");
 }
 
-function generateDashboardPage(spec: BuildSpec): string {
+function generateDashboardServer(spec: BuildSpec): string {
+  const recentModel = spec.models.find(
+    (m) => m.name === spec.dashboard.recentEntity
+  );
+  const recentLower = recentModel ? lowerFirst(recentModel.name) : lowerFirst(spec.models[0].name);
+
+  return `import { trpc, HydrateClient } from "@/trpc/server";
+import { DashboardContent } from "./_components/dashboard-content";
+
+export const dynamic = "force-dynamic";
+export const metadata = { title: "Dashboard" };
+
+export default async function DashboardPage() {
+  void trpc.user.stats.prefetch();
+  void trpc.${recentLower}.list.prefetch({ page: 1, pageSize: 5 });
+
+  return (
+    <HydrateClient>
+      <DashboardContent />
+    </HydrateClient>
+  );
+}
+`;
+}
+
+function generateDashboardClient(spec: BuildSpec): string {
   const recentModel = spec.models.find(
     (m) => m.name === spec.dashboard.recentEntity
   );
@@ -24,7 +50,6 @@ function generateDashboardPage(spec: BuildSpec): string {
   for (const model of spec.models) {
     iconImports.add(model.icon);
   }
-  iconImports.add("TrendingUp");
 
   // Stat cards
   const statCards = spec.models.map((model, i) => {
@@ -33,7 +58,7 @@ function generateDashboardPage(spec: BuildSpec): string {
     return `        <StaggerItem>
           <StatCard
             title="Total ${model.label}"
-            value={stats.${lower}Count.toLocaleString()}
+            value={stats?.${lower}Count.toLocaleString() ?? "0"}
             icon={${model.icon}}
             iconColor="${color}"
           />
@@ -66,7 +91,6 @@ function generateDashboardPage(spec: BuildSpec): string {
                         {item.status}
                       </Badge>
                     )}`;
-    iconImports.delete("TrendingUp"); // not needed if we have status
   }
 
   // Determine display field for recent items
@@ -83,25 +107,23 @@ function generateDashboardPage(spec: BuildSpec): string {
         : "sm:grid-cols-2 lg:grid-cols-4";
 
   const needsBadge = statusField != null;
+  const recentVarName = `recent${recentModel?.name ?? spec.models[0].name}s`;
 
-  return `import { PageHeader } from "@/components/layout/page-header";
+  return `"use client";
+
+import Link from "next/link";
+import { trpc } from "@/trpc/client";
+import { PageHeader } from "@/components/layout/page-header";
 import { StatCard } from "@/components/patterns/stat-card";
 import { EmptyState } from "@/components/patterns/empty-state";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";${needsBadge ? '\nimport { Badge } from "@/components/ui/badge";' : ""}
 import { Button } from "@/components/ui/button";
 import { StaggerList, StaggerItem, SlideUp } from "@/components/shared/motion";
 import { ${[...iconImports].join(", ")} } from "lucide-react";
-import { caller } from "@/trpc/server";
-import Link from "next/link";
-
-export const dynamic = "force-dynamic";
-export const metadata = { title: "Dashboard" };
 ${statusColorMap}
-export default async function DashboardPage() {
-  const [stats, recent${recentModel?.name ?? spec.models[0].name}s] = await Promise.all([
-    caller.user.stats(),
-    caller.${recentLower}.list({ page: 1, pageSize: 5 }),
-  ]);
+export function DashboardContent() {
+  const { data: stats } = trpc.user.stats.useQuery();
+  const { data: ${recentVarName} } = trpc.${recentLower}.list.useQuery({ page: 1, pageSize: 5 });
 
   return (
     <div className="space-y-6">
@@ -118,14 +140,14 @@ ${statCards.join("\n")}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Recent ${recentLabel}</CardTitle>
-            {recent${recentModel?.name ?? spec.models[0].name}s.items.length > 0 && (
+            {${recentVarName} && ${recentVarName}.items.length > 0 && (
               <Button variant="outline" size="sm" asChild>
                 <Link href="/${recentSlug}">View All</Link>
               </Button>
             )}
           </CardHeader>
           <CardContent>
-            {recent${recentModel?.name ?? spec.models[0].name}s.items.length === 0 ? (
+            {!${recentVarName}?.items.length ? (
               <EmptyState
                 icon={${recentIcon}}
                 title="No ${recentLabel.toLowerCase()} yet"
@@ -135,7 +157,7 @@ ${statCards.join("\n")}
               />
             ) : (
               <div className="space-y-2">
-                {recent${recentModel?.name ?? spec.models[0].name}s.items.map((item: { id: string; ${displayFieldName}: string${statusField ? "; status: string | null" : ""} }) => (
+                {${recentVarName}.items.map((item: { id: string; ${displayFieldName}: string${statusField ? "; status: string | null" : ""} }) => (
                   <Link
                     key={item.id}
                     href={\`/${recentSlug}/\${item.id}\`}

@@ -8,6 +8,12 @@ import {
   enumColorMap,
 } from "./utils";
 
+let _allModels: ModelSpec[] = [];
+
+export function setAllModels(models: ModelSpec[]): void {
+  _allModels = models;
+}
+
 export function generateDetailPage(model: ModelSpec): void {
   const slug = model.slug;
   const baseDir = resolvePath("src", "app", "(app)", slug, "[id]");
@@ -83,7 +89,9 @@ function generateDetailServer(model: ModelSpec): string {
   const childSections: string[] = [];
   for (const childName of model.hasMany) {
     const childLower = lowerFirst(childName);
-    const childDisplay = "title"; // reasonable default
+    const childModel = _allModels.find((m) => m.name === childName);
+    const childDisplay = childModel ? displayField(childModel.fields) : "name";
+    const childIcon = childModel?.icon ?? model.icon;
     childSections.push(`
           <Card>
             <CardHeader>
@@ -92,7 +100,7 @@ function generateDetailServer(model: ModelSpec): string {
             <CardContent>
               {${lower}.${childLower}s.length === 0 ? (
                 <EmptyState
-                  icon={${model.icon}}
+                  icon={${childIcon}}
                   title="No ${childName.toLowerCase()}s yet"
                   description="This ${model.labelSingular.toLowerCase()} doesn't have any ${childName.toLowerCase()}s."
                   className="min-h-[200px]"

@@ -1,11 +1,11 @@
 import * as path from "path";
 import { execSync } from "child_process";
 import { type ApplyResult } from "./types.js";
-import { loadManifest, loadState, validateManifest, checkDependencies, checkConflicts } from "./validate.js";
+import { loadManifest, validateManifest, checkDependencies, checkConflicts } from "./validate.js";
 import { createBackup, restoreBackup, cleanupBackup } from "./backup.js";
 import { copyAddedFiles, mergeModifiedFiles } from "./merge.js";
 import { mergePackageJson, mergeEnvFiles } from "./structured.js";
-import { addInstalledSkill } from "./state.js";
+import { readState, addInstalledSkill } from "./state.js";
 
 export async function applySkill(skillName: string, rootDir: string): Promise<ApplyResult> {
   console.log(`\nInstalling skill: ${skillName}`);
@@ -35,7 +35,7 @@ export async function applySkill(skillName: string, rootDir: string): Promise<Ap
   }
 
   // 2. Check dependencies and conflicts
-  const state = loadState(rootDir);
+  const state = readState(rootDir);
   const depErrors = checkDependencies(manifest, state);
   const conflictErrors = checkConflicts(manifest, state);
   if (depErrors.length > 0 || conflictErrors.length > 0) {

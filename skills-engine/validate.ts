@@ -11,14 +11,6 @@ export function loadManifest(skillName: string, rootDir: string): SkillManifest 
   return JSON.parse(raw) as SkillManifest;
 }
 
-export function loadState(rootDir: string): SkillState {
-  const statePath = path.join(rootDir, ".vibekit", "state.json");
-  if (!fs.existsSync(statePath)) {
-    return { installedSkills: [], lastModified: new Date().toISOString() };
-  }
-  return JSON.parse(fs.readFileSync(statePath, "utf-8")) as SkillState;
-}
-
 export function validateManifest(manifest: SkillManifest, rootDir: string): string[] {
   const errors: string[] = [];
 

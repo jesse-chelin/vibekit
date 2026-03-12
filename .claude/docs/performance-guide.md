@@ -58,16 +58,14 @@ After every mutation, invalidate ALL queries that could show stale data:
 ```tsx
 const utils = trpc.useUtils();
 
-const createProject = useMutation(
-  trpc.project.create.mutationOptions({
-    onSuccess: () => {
-      // Invalidate everything that shows project data
-      utils.project.list.invalidate();
-      utils.dashboard.stats.invalidate(); // dashboard shows project count!
-      toast.success("Project created!");
-    },
-  })
-);
+const createProject = trpc.project.create.useMutation({
+  onSuccess: () => {
+    // Invalidate everything that shows project data
+    void utils.project.list.invalidate();
+    void utils.user.stats.invalidate(); // dashboard shows project count!
+    toast.success("Project created!");
+  },
+});
 ```
 
 Think about what OTHER pages display this data:
@@ -77,29 +75,27 @@ Think about what OTHER pages display this data:
 
 ### Optimistic Updates (for snappy UX)
 ```tsx
-const toggleComplete = useMutation(
-  trpc.task.toggleComplete.mutationOptions({
-    onMutate: async ({ id }) => {
-      // Cancel outgoing queries
-      await utils.task.list.cancel();
-      // Snapshot previous value
-      const previous = utils.task.list.getData();
-      // Optimistically update
-      utils.task.list.setData(undefined, (old) =>
-        old?.map((t) => t.id === id ? { ...t, completed: !t.completed } : t)
-      );
-      return { previous };
-    },
-    onError: (err, vars, context) => {
-      // Rollback on error
-      utils.task.list.setData(undefined, context?.previous);
-    },
-    onSettled: () => {
-      // Always refetch to ensure consistency
-      utils.task.list.invalidate();
-    },
-  })
-);
+const toggleComplete = trpc.task.toggleComplete.useMutation({
+  onMutate: async ({ id }) => {
+    // Cancel outgoing queries
+    await utils.task.list.cancel();
+    // Snapshot previous value
+    const previous = utils.task.list.getData();
+    // Optimistically update
+    utils.task.list.setData(undefined, (old) =>
+      old?.map((t) => t.id === id ? { ...t, completed: !t.completed } : t)
+    );
+    return { previous };
+  },
+  onError: (_err, _vars, context) => {
+    // Rollback on error
+    utils.task.list.setData(undefined, context?.previous);
+  },
+  onSettled: () => {
+    // Always refetch to ensure consistency
+    void utils.task.list.invalidate();
+  },
+});
 ```
 
 ## Images

@@ -6,7 +6,7 @@ import { generatePrismaModels } from "./prisma-model";
 import { generateTrpcRouters } from "./trpc-router";
 import { generateExternalRouters } from "./trpc-router-external";
 import { generateListPage } from "./list-page";
-import { generateDetailPage, generateDeleteButton } from "./detail-page";
+import { generateDetailPage, generateDeleteButton, setAllModels } from "./detail-page";
 import { generateFormPages } from "./form-page";
 import { generateDashboard } from "./dashboard";
 import { generateSidebar } from "./sidebar";
@@ -42,6 +42,18 @@ function cleanupTemplateFiles(): void {
   deleteFileOrDir(resolvePath("src", "app", "(app)", "onboarding"));
   deleteFileOrDir(resolvePath("src", "app", "(app)", "settings", "billing", "page.tsx"));
   deleteFileOrDir(resolvePath("src", "app", "(app)", "settings", "team", "page.tsx"));
+
+  // Remove marketing boilerplate (generic SaaS landing, nav, footer)
+  deleteFileOrDir(resolvePath("src", "app", "(marketing)", "page.tsx"));
+  deleteFileOrDir(resolvePath("src", "components", "layout", "marketing-nav.tsx"));
+  deleteFileOrDir(resolvePath("src", "components", "layout", "marketing-footer.tsx"));
+
+  // Remove auth stubs (sign-up and forgot-password are unimplemented)
+  deleteFileOrDir(resolvePath("src", "app", "(auth)", "sign-up", "page.tsx"));
+  deleteFileOrDir(resolvePath("src", "app", "(auth)", "forgot-password", "page.tsx"));
+
+  // Remove dev showcase (template-only)
+  deleteFileOrDir(resolvePath("src", "app", "dev"));
 }
 
 function main(): void {
@@ -84,6 +96,7 @@ function main(): void {
 
   // 5. Generate pages for each model
   console.log("\nGenerating pages...");
+  setAllModels(spec.models);
   for (const model of spec.models) {
     generateListPage(model);
     generateDetailPage(model);
@@ -108,9 +121,7 @@ function main(): void {
   const readOnlyCount = spec.models.filter((m) => m.readOnly).length;
   const mutableCount = spec.models.length - readOnlyCount;
   const totalPages = mutableCount * 4 + readOnlyCount * 2 + 1; // mutable: list+detail+create+edit, readOnly: list+detail, +dashboard
-  const procedureCount = isExternal
-    ? spec.models.reduce((sum, m) => sum + (m.readOnly ? 2 : 5), 0)
-    : spec.models.length * 5;
+  const procedureCount = spec.models.reduce((sum, m) => sum + (m.readOnly ? 2 : 5), 0);
 
   console.log(`\n✓ Generation complete!`);
   console.log(`  ${spec.models.length} models${readOnlyCount > 0 ? ` (${readOnlyCount} read-only)` : ""}`);

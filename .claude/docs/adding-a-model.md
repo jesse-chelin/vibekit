@@ -2,7 +2,7 @@
 
 ## 1. Define in Prisma
 
-Add to `prisma/schema/app.prisma`:
+Add to `prisma/schema.prisma`:
 ```prisma
 model Recipe {
   id          String   @id @default(cuid())
@@ -16,7 +16,7 @@ model Recipe {
 }
 ```
 
-Add the relation to the User model in `auth.prisma`.
+Add the relation to the User model in `prisma/schema.prisma`.
 
 ## 2. Push to database
 ```bash

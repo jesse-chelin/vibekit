@@ -1,10 +1,11 @@
 export interface BuildSpec {
   appName: string;
   dataSource?: "prisma" | "external";  // default: "prisma"
+  needsAuth?: boolean;  // default: true — set false for personal/local dashboards
+  skills?: string[];  // skills selected during interview (e.g., ["charts", "stripe", "rbac"])
   models: ModelSpec[];
   sidebar: NavItemSpec[];
   dashboard: DashboardSpec;
-  settings: SettingsSpec;
 }
 
 export interface ModelSpec {
@@ -51,6 +52,3 @@ export interface DashboardSpec {
   recentEntity: string;
 }
 
-export interface SettingsSpec {
-  tabs: { label: string; href: string }[];
-}

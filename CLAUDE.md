@@ -65,7 +65,7 @@ Produces all standard CRUD scaffolding from a JSON build spec (`generators/types
 
 **Idempotent:** Safe to re-run — cleans previous generated models/pages before regenerating.
 
-**The LLM writes the build-spec.json** during Step 10a of the build, then generators handle the standard 80%. The LLM customization pass (Step 10e) handles business logic, skill integration, branding, and non-standard features.
+**The LLM writes the build-spec.json** during `/setup`, then generators handle the standard 80%. The customization pass handles business logic, skill integration, branding, and non-standard features.
 
 ### Skills Engine
 
@@ -249,6 +249,7 @@ When connecting to external databases (e.g., reading another app's SQLite DB):
 - **Wrap in tRPC routers:** Even for external data, create tRPC routers so the frontend uses the same `trpc.x.useQuery()` pattern. Don't bypass the data flow.
 - **Connection pooling:** For `better-sqlite3`, open the connection once at module level and reuse it. Don't open/close per request.
 - **Monitoring dashboards require real-time:** If the app is a monitoring/observability/analytics dashboard, auto-refresh or real-time updates are v1 requirements, not v2. A monitoring dashboard without auto-refresh is useless. Include health indicators, refresh timestamps, and at least one chart/trend visualization.
+- **Local/personal dashboards don't need auth.** Set `needsAuth: false` in the build spec. Auth creates friction and provides zero security in dev mode anyway. The generators will rewrite middleware to skip auth redirects and remove the `PrismaAdapter` from `auth.ts` (it conflicts with Credentials+JWT).
 
 ## File Conventions
 
@@ -422,7 +423,7 @@ Page padding is ALWAYS `p-4 md:p-6`. Every page. No exceptions. This single rule
 - DO NOT hardcode data in pages — always fetch from tRPC routers. No fake arrays, no demo data, no placeholder numbers.
 - DO NOT return raw arrays from `list` procedures — always return `{ items, total, page, pageSize, totalPages }`. Page templates access `data.items`.
 - DO NOT omit `export const dynamic = "force-dynamic"` on pages using `caller` or `trpc.prefetch()` — the build will fail because auth context isn't available at static generation time
-- DO NOT begin code generation until the user has explicitly approved the build plan (Step 9 of guided-setup.md). Present the full manifest — models, routers, pages, skills, deferred features — and wait for approval. If the user requests changes, update and re-present.
+- DO NOT begin code generation during `/setup` until the user has explicitly approved the build plan (Step 9). See guided-setup.md.
 - DO NOT pass React components (functions) as props from server to client components — Lucide icons, custom components, or any function cannot cross the server/client boundary. See "Server/Client Boundary" section above.
 - DO NOT set WAL pragma or any write-mode pragma on read-only database connections — `pragma("journal_mode = WAL")` throws SQLITE_READONLY. Skip all write pragmas when `readonly: true`.
 - DO NOT use interactive CLI tools (TUIs with prompts/menus) during automated builds — always use `--yes`, `--non-interactive`, or pipe responses. If no non-interactive flag exists, document the manual step for the user.

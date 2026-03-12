@@ -20,7 +20,7 @@ export const metadata = { title: "Page Title" };
 
 export default async function MyPage() {
   return (
-    <div className="flex-1 space-y-6 p-4 md:p-6">
+    <div className="space-y-6">
       <PageHeader
         title="Page Title"
         description="What this page shows."
@@ -39,7 +39,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Loading() {
   return (
-    <div className="flex-1 space-y-6 p-4 md:p-6">
+    <div className="space-y-6">
       {/* PageHeader skeleton */}
       <div className="space-y-2">
         <Skeleton className="h-8 w-48" />
@@ -56,7 +56,12 @@ export default function Loading() {
 Every data-fetching component inside the page MUST handle:
 
 ```tsx
-if (error) return <ErrorState message={error.message} onRetry={refetch} />;
+if (error) return (
+    <div className="text-center py-8">
+      <p className="text-sm text-muted-foreground">{error.message}</p>
+      <Button variant="outline" className="mt-4" onClick={() => refetch()}>Try Again</Button>
+    </div>
+  );
 if (isLoading) return <Skeleton ... />;
 if (!data?.length) return (
   <EmptyState

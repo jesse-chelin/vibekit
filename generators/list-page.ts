@@ -275,7 +275,6 @@ function generateClientList(model: ModelSpec): string {
 
   // Wrapper tag: readOnly doesn't need Fragment
   const wrapOpen = readOnly ? "" : "\n    <>";
-  const wrapClose = readOnly ? "" : "\n    </>";
 
   return `"use client";
 ${stateImport}${routerImport}

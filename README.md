@@ -149,7 +149,7 @@ Claude reads your project docs at the start of every session, so it always knows
 |------|---------------|
 | **30 curated UI components** | Consistent, professional design — every time |
 | **Database + ORM** | Real data storage, not just a pretty frontend |
-| **Authentication** | Sign-up, sign-in, sessions — already wired up |
+| **Authentication** | Sign-up, sign-in, sessions — or skip auth entirely for personal apps |
 | **Type-safe API** | Your frontend and backend speak the same language |
 | **Security** | CSRF protection, rate limiting, input validation — built in |
 | **21 installable skills** | Payments, AI, charts, email, maps, chat, and more |
@@ -192,19 +192,21 @@ npx tsx generators/compose.ts .vibekit/build-spec.json
 | Generator | Output |
 |-----------|--------|
 | `prisma-model.ts` | Prisma models with relations, indexes, User relations |
-| `trpc-router.ts` | 5-procedure routers (list, byId, create, update, delete) + registration |
+| `trpc-router.ts` | Routers with list + byId queries, plus create/update/delete mutations (skipped for read-only models) |
 | `trpc-router-external.ts` | Routers for external data sources (stub queries + connection module) |
 | `list-page.ts` | Server page + client DataTable component + loading skeleton |
 | `detail-page.ts` | Detail page with sidebar + content + delete button |
 | `form-page.ts` | Create + edit pages with Zod validation + loading skeletons |
-| `dashboard.ts` | Stat cards + recent activity card |
-| `app-chrome.ts` | Branded logo, search command with correct routes, root redirect |
+| `dashboard.ts` | Stat cards + recent activity (HydrateClient pattern — no server/client boundary issues) |
+| `app-chrome.ts` | Branded logo, search command, constants, settings layout, auth bypass for local apps |
 | `sidebar.ts` | Navigation with correct icons and routes |
 | `seed.ts` | Realistic seed data |
 
 The build spec schema is defined in `generators/types.ts`. Generators are idempotent — safe to re-run.
 
-**External data sources:** Set `"dataSource": "external"` in the build spec to generate routers with stub query bodies instead of Prisma calls — useful for dashboards that read from another app's database. Set `"readOnly": true` on models to skip create/edit/delete UI entirely.
+**External data sources:** Set `"dataSource": "external"` in the build spec to generate routers with stub query bodies instead of Prisma calls — useful for dashboards that read from another app's database. Set `"readOnly": true` on models to skip create/edit/delete UI and mutation procedures entirely.
+
+**No-auth mode:** Set `"needsAuth": false` for personal/local dashboards. Generators rewrite middleware to skip auth redirects and remove the PrismaAdapter from auth.ts. No sign-in wall, no friction.
 
 ---
 
@@ -242,7 +244,7 @@ Then open Claude Code and run `/setup` again.
 
 Vibekit isn't an AI wrapper or a no-code platform. It's a carefully constrained starter kit that makes Claude Code produce consistently high-quality output by:
 
-1. **Validating before building** — Challenges your idea, identifies competitors, scopes your MVP. The interview prevents you from building the wrong thing.
+1. **Validating before building** — Challenges your idea, researches competitors (mandatory WebSearch), scopes your MVP. The interview prevents you from building the wrong thing.
 2. **Generating, not writing** — TypeScript code generators produce 80% of the app (models, routers, pages, dashboard, sidebar, seed data) from a JSON build spec. The LLM handles the 20% that's unique.
 3. **Constraining the design space** — ~37 curated components, a fixed spacing scale, 4 animation presets. There's literally no way to produce inconsistent UI.
 4. **Mandating completeness** — Every page must have loading states, empty states, error states, and mobile layouts before it's considered done.
